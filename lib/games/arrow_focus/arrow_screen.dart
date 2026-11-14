@@ -27,7 +27,8 @@ class ArrowScreen extends StatelessWidget {
       cue: (_) => const SpeedCue('FOLLOW THE MIDDLE'),
       stimulusHeight: (context) =>
           _maxArrow(context) + (Dims.of(context).compact ? 36 : 52),
-      stimulus: (context, t, _) => _ArrowRow(trial: t, max: _maxArrow(context)),
+      stimulus: (context, _, t, _) =>
+          _ArrowRow(trial: t, max: _maxArrow(context)),
       hint: (_) => 'Swipe or tap the way the middle arrow points.',
       swipe: (s, travel) =>
           ArrowDir.fromSwipe(travel, fourWays: s.block.fourWays),

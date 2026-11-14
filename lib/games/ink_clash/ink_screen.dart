@@ -27,7 +27,7 @@ class InkScreen extends StatelessWidget {
         return SpeedCue('TAP THE ${rule.cue}', outlined: rule == InkRule.word);
       },
       stimulusHeight: (context) => _wordSize(context) * 1.3,
-      stimulus: (context, t, _) {
+      stimulus: (context, _, t, _) {
         final size = _wordSize(context);
         return Semantics(
           label:

@@ -14,6 +14,7 @@ import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
 import 'package:smartx/games/grid_recall/grid_recall_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
+import 'package:smartx/games/odd_one_out/odd_controller.dart';
 import 'package:smartx/games/path_finder/path_controller.dart';
 import 'package:smartx/games/path_finder/path_puzzle.dart';
 import 'package:smartx/games/pattern_sequence/pattern_sequence_controller.dart';
@@ -401,6 +402,95 @@ void main() {
     await tester.pump();
     expect(container.read(arrowSessionProvider).flash, isNull);
     expect(container.read(arrowSessionProvider).answers, hasLength(1));
+  });
+
+  Future<void> openOddOneOut(WidgetTester tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Odd One Out');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Get ready…'), findsOneWidget);
+  }
+
+  testWidgets('a full Odd One Out session: always tap the odd tile', (
+    tester,
+  ) async {
+    await openOddOneOut(tester);
+    for (var block = 0; block < SpeedController.totalRounds; block++) {
+      await tester.pump(SpeedController.getReady);
+      var s = container.read(oddSessionProvider);
+      expect(find.text('TAP THE ODD ONE'), findsOneWidget);
+      while (s.phase == SpeedPhase.playing) {
+        if (s.flash == null) {
+          // The outgoing grid is still on screen for a moment, but only the
+          // current one takes taps.
+          final key = find
+              .byKey(ValueKey('odd-${s.trial!.answer}'))
+              .hitTestable();
+          await tester.tap(key);
+          await tester.pump();
+          expect(container.read(oddSessionProvider).flash?.correct, isTrue);
+        }
+        await tester.pump(SpeedController.flashFor);
+        s = container.read(oddSessionProvider);
+      }
+      await tester.pumpAndSettle();
+      expect(s.result!.right, 12);
+      expect(find.textContaining('All 12 right.'), findsOneWidget);
+      expect(find.text('Odd shape, turn or size'), findsOneWidget);
+      expect(find.text('The odd one'), findsNothing);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('3 of 3 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).xpFor(Skill.attention), 30);
+    expect(
+      container.read(progressProvider).xpFor(Skill.patternRecognition),
+      15,
+    );
+  });
+
+  testWidgets('Odd One Out: a wrong tap is shown, then the missed grid', (
+    tester,
+  ) async {
+    await openOddOneOut(tester);
+    await tester.pump(SpeedController.getReady);
+    var s = container.read(oddSessionProvider);
+    final missedGrid = s.trial!;
+    final wrong = (missedGrid.odd + 1) % missedGrid.tiles.length;
+    await tester.tap(find.byKey(ValueKey('odd-$wrong')).hitTestable());
+    await tester.pump();
+    s = container.read(oddSessionProvider);
+    expect(s.markFor(wrong), SpeedMark.wrong);
+    expect(s.markFor(missedGrid.odd), SpeedMark.answer);
+
+    // Let every other grid run out of time.
+    while (container.read(oddSessionProvider).phase == SpeedPhase.playing) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Grid 1'), findsOneWidget);
+    expect(find.text('The odd one'), findsOneWidget);
+    expect(find.text('Your tap'), findsOneWidget);
+    expect(find.textContaining('Grid 1: the odd one was in'), findsOneWidget);
   });
 
   test('restart puts the piece back and resets moves', () async {

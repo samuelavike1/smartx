@@ -58,8 +58,9 @@ class SpeedGameScreen<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
     required this.stimulus,
     required this.stimulusHeight,
     required this.hint,
-    required this.controls,
+    this.controls,
     required this.review,
+    this.reviewExtra,
     this.swipe,
   });
 
@@ -68,21 +69,33 @@ class SpeedGameScreen<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
   final GameDefinition game;
   final SpeedCue Function(SpeedSessionState<B, T, A> s) cue;
 
-  /// The trial itself; only built while there is one.
-  final Widget Function(BuildContext context, T trial, int index) stimulus;
+  /// The trial itself; only built while there is one. Games answered by
+  /// tapping the stimulus (a grid of tiles) call [press].
+  final Widget Function(
+    BuildContext context,
+    SpeedSessionState<B, T, A> s,
+    T trial,
+    void Function(A option) press,
+  )
+  stimulus;
 
   /// Fixed height for the stimulus, so the layout doesn't jump.
   final double Function(BuildContext context) stimulusHeight;
   final String Function(SpeedSessionState<B, T, A> s) hint;
 
-  /// The answer buttons. Call [press] with the option tapped.
+  /// The answer buttons in the dock, if any. Call [press] with the option
+  /// tapped.
   final Widget Function(
     BuildContext context,
     SpeedSessionState<B, T, A> s,
     void Function(A option) press,
-  )
+  )?
   controls;
   final SpeedReviewText review;
+
+  /// An extra card under the block review (e.g. the first missed trial).
+  final Widget? Function(BuildContext context, SpeedSessionState<B, T, A> s)?
+  reviewExtra;
 
   /// Maps a swipe (finger travel) to an answer, or null to ignore it.
   final A? Function(SpeedSessionState<B, T, A> s, Offset travel)? swipe;
@@ -187,8 +200,9 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
               limit: state.block.limit,
               result: state.result!,
               text: screen.review,
+              extra: screen.reviewExtra?.call(context, state),
             )
-          : _Prompt<B, T, A>(screen: screen, state: state),
+          : _Prompt<B, T, A>(screen: screen, state: state, press: _press),
       dock: !state.answered
           ? Column(
               mainAxisSize: MainAxisSize.min,
@@ -202,8 +216,10 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                SizedBox(height: d.gapS),
-                screen.controls(context, state, _press),
+                if (screen.controls case final controls?) ...[
+                  SizedBox(height: d.gapS),
+                  controls(context, state, _press),
+                ],
               ],
             )
           : FeedbackSlot(
@@ -230,10 +246,15 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
 
 class _Prompt<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
     extends StatelessWidget {
-  const _Prompt({required this.screen, required this.state});
+  const _Prompt({
+    required this.screen,
+    required this.state,
+    required this.press,
+  });
 
   final SpeedGameScreen<B, T, A> screen;
   final SpeedSessionState<B, T, A> state;
+  final void Function(A option) press;
 
   @override
   Widget build(BuildContext context) {
@@ -268,11 +289,20 @@ class _Prompt<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
                 scale: Tween(begin: 0.85, end: 1.0).animate(a),
                 child: child,
               ),
+              // The outgoing trial can't be tapped while it fades, or a
+              // quick tap could answer the new trial from the old one.
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.center,
+                children: [
+                  for (final p in previous) IgnorePointer(child: p),
+                  ?current,
+                ],
+              ),
               child: t == null
                   ? const SizedBox.shrink()
                   : KeyedSubtree(
                       key: ValueKey(state.index),
-                      child: screen.stimulus(context, t, state.index),
+                      child: screen.stimulus(context, state, t, press),
                     ),
             ),
           ),
@@ -371,12 +401,16 @@ class SpeedButton extends StatelessWidget {
     required this.mark,
     required this.onTap,
     required this.child,
+    this.radius,
   });
 
   final String label;
   final SpeedMark mark;
   final VoidCallback onTap;
   final Widget child;
+
+  /// Corner radius; defaults to the button radius (16 compact, 18 regular).
+  final double? radius;
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +429,7 @@ class SpeedButton extends StatelessWidget {
         duration: const Duration(milliseconds: 120),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(d.compact ? 16 : 18),
+          borderRadius: BorderRadius.circular(radius ?? (d.compact ? 16 : 18)),
           border: Border.all(color: edge, width: width),
         ),
         child: child,
@@ -414,6 +448,7 @@ class SpeedReview extends StatelessWidget {
     required this.limit,
     required this.result,
     required this.text,
+    this.extra,
   });
 
   final int round;
@@ -422,6 +457,9 @@ class SpeedReview extends StatelessWidget {
   final Duration limit;
   final SpeedResult result;
   final SpeedReviewText text;
+
+  /// Shown under the ✓/✕ strip.
+  final Widget? extra;
 
   /// Colour of the conflict bar (the Ink Clash orange, in every game).
   static const conflictColor = Color(0xFFE06C00);
@@ -477,6 +515,9 @@ class SpeedReview extends StatelessWidget {
     );
 
     final cost = r.conflictCost;
+    // On short phones the feedback card covers the bottom of the body, so
+    // the extra card (the missed trial) moves up where it is seen at once.
+    final extraFirst = d.compact;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -508,6 +549,7 @@ class SpeedReview extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         SizedBox(height: d.gapL),
+        if (extraFirst && extra != null) ...[extra!, SizedBox(height: d.gapS)],
         Container(
           padding: EdgeInsets.all(d.compact ? 12 : 16),
           decoration: BoxDecoration(
@@ -571,6 +613,7 @@ class SpeedReview extends StatelessWidget {
             ],
           ],
         ),
+        if (!extraFirst && extra != null) ...[SizedBox(height: d.gapS), extra!],
         SizedBox(height: d.gapM),
       ],
     );
