@@ -4,34 +4,28 @@ import 'package:smartx/features/feed/feed_plan.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 
 void main() {
-  test(
-    'a feed has 20 cards, 5 per game, never the same game twice running',
-    () {
-      for (var seed = 0; seed < 300; seed++) {
-        final plan = planFeed(levelFor: (k) => k.index + 2, seed: seed);
-        expect(plan, hasLength(FeedRules.cards));
-        for (final k in FeedKind.values) {
-          expect(plan.where((c) => c.kind == k), hasLength(5));
-        }
-        for (var i = 1; i < plan.length; i++) {
-          expect(plan[i].kind, isNot(plan[i - 1].kind), reason: 'seed $seed');
-        }
-        for (final c in plan) {
-          expect(c.level, c.kind.index + 2, reason: 'plays at the game level');
-        }
+  test('a feed has 20 cards, an equal share per game, never the same game twice running', () {
+    for (var seed = 0; seed < 300; seed++) {
+      final plan = planFeed(levelFor: (k) => k.index + 2, seed: seed);
+      expect(plan, hasLength(FeedRules.cards));
+      for (final k in FeedKind.values) {
+        expect(
+          plan.where((c) => c.kind == k),
+          hasLength(FeedRules.cards ~/ FeedKind.values.length),
+        );
       }
-      expect(
-        [
-          for (final c in planFeed(levelFor: (_) => 1, seed: 9))
-            (c.kind, c.seed),
-        ],
-        [
-          for (final c in planFeed(levelFor: (_) => 1, seed: 9))
-            (c.kind, c.seed),
-        ],
-      );
-    },
-  );
+      for (var i = 1; i < plan.length; i++) {
+        expect(plan[i].kind, isNot(plan[i - 1].kind), reason: 'seed $seed');
+      }
+      for (final c in plan) {
+        expect(c.level, c.kind.index + 2, reason: 'plays at the game level');
+      }
+    }
+    expect(
+      [for (final c in planFeed(levelFor: (_) => 1, seed: 9)) (c.kind, c.seed)],
+      [for (final c in planFeed(levelFor: (_) => 1, seed: 9)) (c.kind, c.seed)],
+    );
+  });
 
   test('a burst keeps calm and conflict trials, in order', () {
     const gen = InkGenerator();

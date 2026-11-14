@@ -3,6 +3,7 @@ import '../../games/deduce/deduce_game.dart';
 import '../../games/echo_back/echo_back_game.dart';
 import '../../games/grid_recall/grid_recall_game.dart';
 import '../../games/ink_clash/ink_clash_game.dart';
+import '../../games/mental_math/mental_math_game.dart';
 import '../../games/odd_one_out/odd_one_out_game.dart';
 import '../../games/odds_on/odds_on_game.dart';
 import '../../games/path_finder/path_finder_game.dart';
@@ -20,6 +21,7 @@ const List<GameDefinition> gameRegistry = [
   ArrowFocusGame(),
   OddOneOutGame(),
   OddsOnGame(),
+  MentalMathGame(),
 ];
 
 GameDefinition? findGame(String id) {

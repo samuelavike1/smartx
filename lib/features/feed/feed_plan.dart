@@ -6,6 +6,7 @@ import '../../core/game/speed_game.dart';
 import '../../core/skills/skill.dart';
 import '../../games/arrow_focus/arrow_focus_game.dart';
 import '../../games/ink_clash/ink_clash_game.dart';
+import '../../games/mental_math/mental_math_game.dart';
 import '../../games/odd_one_out/odd_one_out_game.dart';
 import '../../games/pattern_sequence/pattern_sequence_game.dart';
 
@@ -18,6 +19,7 @@ enum FeedKind {
   ink(InkClashGame.gameId, 'Ink Clash', Skill.attention),
   arrow(ArrowFocusGame.gameId, 'Arrow Focus', Skill.attention),
   odd(OddOneOutGame.gameId, 'Odd One Out', Skill.attention),
+  math(MentalMathGame.gameId, 'Mental Math', Skill.numbers),
   pattern(
     PatternSequenceGame.gameId,
     'Pattern Sequence',

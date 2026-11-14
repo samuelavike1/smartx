@@ -39,10 +39,10 @@ void main() {
   }
 
   /// The key of the control that gives [answer] in a speed card.
-  Key keyFor(Object? answer) => switch (answer) {
+  Key keyFor(FeedKind kind, Object? answer) => switch (answer) {
     final InkColour c => ValueKey('ink-${c.name}'),
     final ArrowDir d => ValueKey('arrow-${d.name}'),
-    final int i => ValueKey('odd-$i'),
+    final int i => ValueKey(kind == FeedKind.math ? 'math-$i' : 'odd-$i'),
     _ => throw ArgumentError(answer),
   };
 
@@ -71,7 +71,7 @@ void main() {
     for (final (i, t) in speed.block.trials.indexed) {
       final answer = t.answer;
       if (i < rightUpTo) {
-        await tester.tap(find.byKey(keyFor(answer)).hitTestable());
+        await tester.tap(find.byKey(keyFor(speed.kind, answer)).hitTestable());
       } // else: let it time out
       await tester.pump();
       if (i >= rightUpTo) await tester.pump(speed.block.limit);
@@ -108,15 +108,17 @@ void main() {
 
     expect(find.text('QUICK FEED DONE'), findsOneWidget);
     expect(find.bySemanticsLabel('20 of 20 cards right'), findsOneWidget);
-    expect(find.text('75 of 75 answers right'), findsOneWidget);
-    expect(find.text('5 of 5 sequences right'), findsOneWidget);
-    expect(find.text('first feed'), findsNWidgets(2));
+    expect(find.text('60 of 60 answers right'), findsOneWidget);
+    expect(find.text('20 of 20 answers right'), findsOneWidget);
+    expect(find.text('4 of 4 sequences right'), findsOneWidget);
+    expect(find.text('first feed'), findsNWidgets(3));
     expect(find.text('×20'), findsOneWidget);
     expect(find.text('+100'), findsOneWidget);
 
     final progress = container.read(progressProvider);
-    expect(progress.xpFor(Skill.attention), 75);
-    expect(progress.xpFor(Skill.patternRecognition), 25);
+    expect(progress.xpFor(Skill.attention), 60);
+    expect(progress.xpFor(Skill.numbers), 20);
+    expect(progress.xpFor(Skill.patternRecognition), 20);
     // The feed never touches game levels or "played today".
     expect(progress.forGame('ink_clash').sessions, 0);
 

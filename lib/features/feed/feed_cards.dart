@@ -8,6 +8,8 @@ import '../../games/arrow_focus/arrow_puzzle.dart';
 import '../../games/arrow_focus/arrow_screen.dart';
 import '../../games/ink_clash/ink_puzzle.dart';
 import '../../games/ink_clash/ink_screen.dart';
+import '../../games/mental_math/math_puzzle.dart';
+import '../../games/mental_math/math_screen.dart';
 import '../../games/odd_one_out/odd_puzzle.dart';
 import '../../games/odd_one_out/odd_screen.dart';
 import '../../games/pattern_sequence/pattern_sequence_screen.dart';
@@ -60,6 +62,17 @@ Widget feedCardFor(
       return SpeedFeedCard<OddBlock, OddTrial, int>(
         kind: spec.kind,
         ui: oddUi,
+        block: b.withTrials(burstOf(b.trials)),
+        onDone: onDone,
+      );
+    case FeedKind.math:
+      final b = const MathGenerator().generate(
+        level: spec.level,
+        seed: spec.seed,
+      );
+      return SpeedFeedCard<MathBlock, MathTrial, int>(
+        kind: spec.kind,
+        ui: mathUi,
         block: b.withTrials(burstOf(b.trials)),
         onDone: onDone,
       );

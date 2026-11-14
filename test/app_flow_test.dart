@@ -14,6 +14,7 @@ import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
 import 'package:smartx/games/grid_recall/grid_recall_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
+import 'package:smartx/games/mental_math/math_controller.dart';
 import 'package:smartx/games/odd_one_out/odd_controller.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
 import 'package:smartx/games/path_finder/path_controller.dart';
@@ -612,6 +613,55 @@ void main() {
     }
     // Any overflow above would have failed the test.
     expect(find.textContaining('0 of 8 correct'), findsOneWidget);
+  });
+
+  testWidgets('a full Mental Math session: always tap the right answer', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Mental Math');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    for (var block = 0; block < SpeedController.totalRounds; block++) {
+      await tester.pump(SpeedController.getReady);
+      var s = container.read(mathSessionProvider);
+      expect(find.text('WORK IT OUT'), findsOneWidget);
+      while (s.phase == SpeedPhase.playing) {
+        if (s.flash == null) {
+          final key = find.byKey(ValueKey('math-${s.trial!.answer}'));
+          await tester.tap(key.hitTestable());
+          await tester.pump();
+          expect(container.read(mathSessionProvider).flash?.correct, isTrue);
+        }
+        await tester.pump(SpeedController.flashFor);
+        s = container.read(mathSessionProvider);
+      }
+      await tester.pumpAndSettle();
+      expect(s.result!.right, 12);
+      expect(find.textContaining('All 12 right.'), findsOneWidget);
+      expect(find.text('Carries and hard facts'), findsOneWidget);
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('3 of 3 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).xpFor(Skill.numbers), 30);
   });
 
   test('restart puts the piece back and resets moves', () async {
