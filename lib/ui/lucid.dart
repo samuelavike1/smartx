@@ -6,32 +6,32 @@ import 'package:material_ui/material_ui.dart';
 /// skills. Puzzles keep their own content colours.
 abstract final class Lucid {
   // Light
-  static const ground = Color(0xFFF6F5F1);
+  static const ground = Color(0xFFEFEFF5);
   static const surface = Color(0xFFFFFFFF);
   static const ink = Color(0xFF16161D);
   static const muted = Color(0xFF5C5C6B);
-  static const line = Color(0xFFE4E2DA);
-  static const chip = Color(0xFFEDEBE4);
+  static const line = Color(0xFFE0E0E9);
+  static const chip = Color(0xFFE6E6EE);
 
   // Brand / rewards
-  static const spark = Color(0xFFFF8A3D);
-  static const sparkTint = Color(0xFFFFE8D6);
-  static const sparkText = Color(0xFF7A3410);
+  static const spark = Color(0xFFFF6A00);
+  static const sparkTint = Color(0xFFFFD8B5);
+  static const sparkText = Color(0xFF7C2D12);
 
   // Feedback (always paired with an icon)
-  static const correct = Color(0xFF1F8A5B);
-  static const correctTint = Color(0xFFEAF6EF);
-  static const correctText = Color(0xFF17714A);
-  static const miss = Color(0xFFD23F57);
-  static const missTint = Color(0xFFFCE9EC);
+  static const correct = Color(0xFF16A34A);
+  static const correctTint = Color(0xFFC8F4D6);
+  static const correctText = Color(0xFF166534);
+  static const miss = Color(0xFFE11D48);
+  static const missTint = Color(0xFFFFD3DC);
 
-  // Dark
-  static const nightGround = Color(0xFF14131B);
-  static const nightSurface = Color(0xFF1E1C29);
-  static const nightRaised = Color(0xFF2A2836);
-  static const nightLine = Color(0xFF34313F);
-  static const nightText = Color(0xFFF3F2F7);
-  static const nightMuted = Color(0xFFB4B1C4);
+  // Dark: true black, so OLED pixels switch off
+  static const nightGround = Color(0xFF000000);
+  static const nightSurface = Color(0xFF101014);
+  static const nightRaised = Color(0xFF1C1C22);
+  static const nightLine = Color(0xFF26262E);
+  static const nightText = Color(0xFFF5F5F7);
+  static const nightMuted = Color(0xFFA8A8B3);
 
   // Shape
   static const double radiusS = 12;

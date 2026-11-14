@@ -14,17 +14,17 @@ enum Skill {
   patternRecognition(
     'Pattern recognition',
     'Pattern',
-    Color(0xFF0F8B8D),
+    Color(0xFF0D9488),
     SkillMarker.circle,
   ),
   attention('Attention', 'Focus', Color(0xFFEAB308), SkillMarker.triangle),
   problemSolving(
     'Problem solving',
     'Solve',
-    Color(0xFFB83280),
+    Color(0xFFDB2777),
     SkillMarker.diamond,
   ),
-  memory('Memory', 'Memory', Color(0xFF8B5CF6), SkillMarker.ring),
+  memory('Memory', 'Memory', Color(0xFF7C3AED), SkillMarker.ring),
 
   /// The quant track (Odds On and the games after it): probability,
   /// counting and mental arithmetic. Dark lime: the one hue left between

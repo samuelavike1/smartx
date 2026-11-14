@@ -8,7 +8,7 @@ import '../../core/game/speed_game.dart';
 /// shows the name, so colour is never the only cue on the controls.
 enum InkColour {
   blue('Blue', Color(0xFF1E5FD6), Color(0xFF6C9BFF)),
-  orange('Orange', Color(0xFFE06C00), Color(0xFFF59E4C)),
+  orange('Orange', Color(0xFFD96500), Color(0xFFF59E4C)),
   green('Green', Color(0xFF2E8B3E), Color(0xFF4CC26B)),
   pink('Pink', Color(0xFFD0338A), Color(0xFFF06BB0));
 
