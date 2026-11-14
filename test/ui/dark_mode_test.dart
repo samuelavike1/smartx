@@ -9,6 +9,7 @@ import 'package:smartx/core/storage/progress.dart';
 import 'package:smartx/features/feed/feed_controller.dart';
 import 'package:smartx/features/feed/feed_plan.dart';
 import 'package:smartx/features/games/games_screen.dart';
+import 'package:smartx/games/best_run/run_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
@@ -62,10 +63,13 @@ Set<String> dayColours(WidgetTester tester) {
 void main() {
   late ProviderContainer container;
 
-  Future<void> pumpDark(WidgetTester tester) async {
+  Future<void> pumpDark(
+    WidgetTester tester, [
+    Map<String, Object> extra = const {},
+  ]) async {
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
-    SharedPreferences.setMockInitialValues(rulesSeen());
+    SharedPreferences.setMockInitialValues(rulesSeen(extra));
     final prefs = await SharedPreferences.getInstance();
     container = ProviderContainer(
       overrides: [
@@ -219,6 +223,24 @@ void main() {
     }
   });
 
+  for (final level in [5, 9]) {
+    testWidgets('Best Run at level $level and its review are dark', (
+      tester,
+    ) async {
+      await pumpDark(tester, {'game.best_run.level': level});
+      await openGame(tester, 'Best Run');
+      await tester.pumpAndSettle();
+      final c = container.read(runSessionProvider.notifier);
+      c.tapDay(0);
+      c.tapDay(1);
+      await tester.pumpAndSettle();
+      expectNoDayColours(tester, 'Best Run level $level chosen');
+      c.lock();
+      await tester.pumpAndSettle();
+      expect(container.read(runSessionProvider).answered, isTrue);
+      expectNoDayColours(tester, 'Best Run level $level review');
+    });
+  }
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
     await pumpDark(tester);
     await openGame(tester, 'Ink Clash');

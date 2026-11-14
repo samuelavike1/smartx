@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -13,6 +15,7 @@ import 'package:smartx/games/better_bet/bet_controller.dart';
 import 'package:smartx/games/better_bet/bet_puzzle.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_puzzle.dart';
+import 'package:smartx/games/best_run/run_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/odds_on/odds_math.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
@@ -1058,6 +1061,96 @@ void main() {
       // Wrong picks show both tiles and the longest feedback.
       for (var r = 0; r < 4; r++) {
         await answerCount(tester, right: false);
+      }
+    });
+  }
+
+  Future<void> openBestRun(WidgetTester tester) async {
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Best Run'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Best Run'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> answerRun(WidgetTester tester, {required bool right}) async {
+    final q = container.read(runSessionProvider).puzzle;
+    final (s, e) = q.bestChoice;
+    // A wrong pick: one day short of the best (or one day long).
+    final (a, b) = right
+        ? (s, e)
+        : (e > s + (q.prices ? 1 : 0)
+              ? (s, e - 1)
+              : (s, min(e + 1, q.days - 1)));
+    await tapKey(tester, 'day-$a');
+    await tapKey(tester, 'day-$b');
+    final st = container.read(runSessionProvider);
+    expect((st.start, st.end), (a, b));
+    await tapKey(tester, 'run-lock');
+    expect(container.read(runSessionProvider).lastCorrect, right);
+    expect(find.text('Working it out'), findsOneWidget);
+    expect(find.text(q.feedbackFor(a, b)), findsOneWidget);
+    final next = find.byType(FilledButton);
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Best Run session: every stretch right', (tester) async {
+    RunController.seed = 2;
+    addTearDown(() => RunController.seed = null);
+    await pumpApp(tester);
+    await openBestRun(tester);
+    for (var r = 0; r < RunController.totalRounds; r++) {
+      await answerRun(tester, right: true);
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.numbers), 80);
+    expect(progress.xpFor(Skill.problemSolving), 40);
+  });
+
+  for (final level in [8, 9, 10]) {
+    testWidgets('Best Run at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      RunController.seed = level;
+      addTearDown(() => RunController.seed = null);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.best_run.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openBestRun(tester);
+      for (var r = 0; r < 3; r++) {
+        await answerRun(tester, right: false);
       }
     });
   }
