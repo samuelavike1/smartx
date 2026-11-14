@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../ui/density.dart';
+import '../../ui/motion.dart';
 
 import '../../core/game/game_registry.dart';
 import '../../core/storage/progress.dart';
@@ -36,10 +37,16 @@ class GamesScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          for (final game in gameRegistry)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: GameCard(game: game, progress: progress.forGame(game.id)),
+          for (final (i, game) in gameRegistry.indexed)
+            FadeSlideIn(
+              index: i,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: GameCard(
+                  game: game,
+                  progress: progress.forGame(game.id),
+                ),
+              ),
             ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../density.dart';
 import '../lucid.dart';
 import 'press_scale.dart';
+import '../motion.dart';
 import '../palette.dart';
 import '../../core/game/game_definition.dart';
 import 'how_to_play.dart';
@@ -123,15 +124,23 @@ class GameTopBar extends StatelessWidget {
               children: [
                 for (var i = 0; i < total; i++)
                   Expanded(
-                    child: AnimatedContainer(
-                      duration: Lucid.pop,
+                    // A filled segment sweeps in from the left.
+                    child: Container(
                       height: d.compact ? 5 : 6,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
-                        color: i < filled
-                            ? scheme.primary
-                            : scheme.outlineVariant,
+                        color: scheme.outlineVariant,
                         borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: AnimatedFractionallySizedBox(
+                        duration: reducedMotion(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 320),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.centerLeft,
+                        widthFactor: i < filled ? 1 : 0,
+                        child: ColoredBox(color: scheme.primary),
                       ),
                     ),
                   ),
@@ -185,10 +194,24 @@ class LevelComboRow extends StatelessWidget {
           background: scheme.surfaceContainerHigh,
           foreground: scheme.onSurface,
         ),
+        // Each streak step flips the counter up.
         AnimatedSwitcher(
           duration: Lucid.pop,
-          transitionBuilder: (child, a) =>
-              ScaleTransition(scale: a, child: child),
+          transitionBuilder: (child, a) => reducedMotion(context)
+              ? FadeTransition(opacity: a, child: child)
+              : FadeTransition(
+                  opacity: a,
+                  child: SlideTransition(
+                    position:
+                        Tween(
+                          begin: const Offset(0, 0.6),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(parent: a, curve: Curves.easeOutBack),
+                        ),
+                    child: child,
+                  ),
+                ),
           child: combo >= 2
               ? GamePill(
                   key: ValueKey('combo-$combo'),
@@ -283,6 +306,55 @@ class _FeedbackCardState extends State<FeedbackCard> {
     final d = Dims.of(context);
     final headline = d.compact ? 18.0 : 20.0;
 
+    final calm = reducedMotion(context);
+    // Right: the tick pops (overshooting to about 1.08). Wrong: the card
+    // shakes. Haptics come from each game as the answer lands.
+    final icon = Container(
+      width: d.compact ? 28 : 32,
+      height: d.compact ? 28 : 32,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: Icon(
+        correct ? Icons.check_rounded : Icons.close_rounded,
+        size: d.compact ? 18 : 20,
+        color: correct ? p.onCorrect : p.onMiss,
+      ),
+    );
+
+    return Shake(
+      active: !correct && !calm,
+      child: _card(
+        context,
+        theme,
+        p,
+        d,
+        headline,
+        textColor,
+        points,
+        correct && !calm
+            ? TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.4, end: 1),
+                duration: Lucid.pop + const Duration(milliseconds: 80),
+                curve: Curves.easeOutBack,
+                builder: (_, s, child) =>
+                    Transform.scale(scale: s, child: child),
+                child: icon,
+              )
+            : icon,
+      ),
+    );
+  }
+
+  Widget _card(
+    BuildContext context,
+    ThemeData theme,
+    LucidPalette p,
+    Dims d,
+    double headline,
+    Color textColor,
+    int points,
+    Widget icon,
+  ) {
+    final correct = widget.correct;
     return Container(
       padding: EdgeInsets.all(d.cardPad),
       decoration: BoxDecoration(
@@ -302,16 +374,7 @@ class _FeedbackCardState extends State<FeedbackCard> {
         children: [
           Row(
             children: [
-              Container(
-                width: d.compact ? 28 : 32,
-                height: d.compact ? 28 : 32,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Icon(
-                  correct ? Icons.check_rounded : Icons.close_rounded,
-                  size: d.compact ? 18 : 20,
-                  color: correct ? p.onCorrect : p.onMiss,
-                ),
-              ),
+              icon,
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

@@ -8,6 +8,7 @@ import '../../core/storage/progress.dart';
 import '../../features/today/daily_workout.dart';
 import '../density.dart';
 import '../lucid.dart';
+import '../motion.dart';
 import 'game_chrome.dart';
 import 'press_scale.dart';
 import '../palette.dart';
@@ -78,7 +79,10 @@ class SessionResults extends ConsumerWidget {
     final side = d.compact ? 16.0 : 20.0;
     final gap = d.compact ? 12.0 : 18.0;
 
-    return Column(
+    // A level up or a new best gets a burst of confetti.
+    final celebrate = isNewBest || level > startLevel;
+
+    final results = Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
@@ -189,6 +193,13 @@ class SessionResults extends ConsumerWidget {
             ],
           ),
         ),
+      ],
+    );
+    if (!celebrate) return results;
+    return Stack(
+      children: [
+        results,
+        const Positioned.fill(child: ConfettiBurst()),
       ],
     );
   }

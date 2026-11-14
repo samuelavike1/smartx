@@ -10,14 +10,18 @@ import 'features/shell/app_shell.dart';
 import 'features/skills/skills_screen.dart';
 import 'features/today/today_screen.dart';
 import 'ui/density.dart';
+import 'ui/motion.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/how_to_play.dart';
 
 GoRouter buildRouter() => GoRouter(
   initialLocation: '/today',
   routes: [
-    StatefulShellRoute.indexedStack(
+    // Tabs stay alive like an IndexedStack; the one you switch to fades in.
+    StatefulShellRoute(
       builder: (_, _, shell) => AppShell(shell: shell),
+      navigatorContainerBuilder: (_, shell, children) =>
+          FadeBranches(index: shell.currentIndex, children: children),
       branches: [
         StatefulShellBranch(
           routes: [
@@ -43,15 +47,21 @@ GoRouter buildRouter() => GoRouter(
     ),
     // Outside the shell: games and the feed run full screen, without the
     // tab bar.
-    GoRoute(path: '/feed', builder: (_, _) => const FeedScreen()),
+    GoRoute(
+      path: '/feed',
+      pageBuilder: (_, state) => slidePage(state, const FeedScreen()),
+    ),
     GoRoute(
       path: '/game/:id',
-      builder: (_, state) {
+      pageBuilder: (_, state) {
         final game = findGame(state.pathParameters['id']!);
-        return game == null
-            ? const Scaffold(body: Center(child: Text('Game not found')))
-            // First time: the How to play page, then the game.
-            : HowToGate(game: game);
+        return slidePage(
+          state,
+          game == null
+              ? const Scaffold(body: Center(child: Text('Game not found')))
+              // First time: the How to play page, then the game.
+              : HowToGate(game: game),
+        );
       },
     ),
   ],

@@ -6,6 +6,7 @@ import '../../core/game/game_registry.dart';
 import '../../core/skills/skill.dart';
 import '../../core/storage/progress.dart';
 import '../../ui/density.dart';
+import '../../ui/motion.dart';
 import '../../ui/lucid.dart';
 import '../../ui/widgets/press_scale.dart';
 import '../../ui/widgets/skill_marker.dart';
@@ -72,21 +73,24 @@ class TodayScreen extends ConsumerWidget {
             ),
           ),
           SizedBox(height: d.gapL),
-          _WorkoutCard(
-            items: dailyWorkout(progress, now),
-            weakest: weakestSkill(progress),
+          FadeSlideIn(
+            index: 0,
+            child: _WorkoutCard(
+              items: dailyWorkout(progress, now),
+              weakest: weakestSkill(progress),
+            ),
           ),
           SizedBox(height: d.gapL),
-          const _FeedRow(),
+          const FadeSlideIn(index: 1, child: _FeedRow()),
           SizedBox(height: d.gapL),
-          _SkillsCard(progress: progress),
+          FadeSlideIn(index: 2, child: _SkillsCard(progress: progress)),
           SizedBox(height: d.gapL),
           Text(
             'FREE PLAY',
             style: lucidLabel(scheme.onSurfaceVariant, size: d.label),
           ),
           SizedBox(height: d.gapS),
-          const _FreePlayGrid(),
+          const FadeSlideIn(index: 3, child: _FreePlayGrid()),
         ],
       ),
     );
