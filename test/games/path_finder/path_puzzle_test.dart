@@ -30,12 +30,19 @@ void main() {
     r = b.slide(r.end, r.hasKey, Dir.right);
     expect(r.end, 4 * 6 + 5, reason: 'stops at the edge');
     r = b.slide(r.end, r.hasKey, Dir.up);
-    expect(r.won, isTrue, reason: 'picks up the key, opens the gate, reaches the flag');
+    expect(
+      r.won,
+      isTrue,
+      reason: 'picks up the key, opens the gate, reaches the flag',
+    );
 
     // Without the key the gate stops the same slide.
     final blocked = b.slide(4 * 6 + 5, false, Dir.up);
     expect(blocked.hasKey, isTrue); // the key is on the way…
-    expect(b.slide(2 * 6 + 5, false, Dir.up).end, 2 * 6 + 5); // …but not from above it
+    expect(
+      b.slide(2 * 6 + 5, false, Dir.up).end,
+      2 * 6 + 5,
+    ); // …but not from above it
 
     expect(b.solve(start), [Dir.right, Dir.up, Dir.right, Dir.up]);
   });
@@ -83,17 +90,29 @@ void main() {
         for (final (i, dir) in p.solution.indexed) {
           final r = p.board.slide(pos, key, dir);
           expect(r.moved, isTrue);
-          expect(r.won, i == p.solution.length - 1, reason: 'seed $seed move $i');
+          expect(
+            r.won,
+            i == p.solution.length - 1,
+            reason: 'seed $seed move $i',
+          );
           pos = r.end;
           key = r.hasKey;
         }
 
         if (d.useKey) {
-          final noKey = [for (final c in p.board.cells) c == Cell.key ? Cell.floor : c];
-          expect(PathBoard(p.size, noKey).solve(p.start), isNull,
-              reason: 'the key must be needed (seed $seed)');
+          final noKey = [
+            for (final c in p.board.cells) c == Cell.key ? Cell.floor : c,
+          ];
+          expect(
+            PathBoard(p.size, noKey).solve(p.start),
+            isNull,
+            reason: 'the key must be needed (seed $seed)',
+          );
         }
-        expect(p.board.cells.where((c) => c.arrow != null), hasLength(d.arrows));
+        expect(
+          p.board.cells.where((c) => c.arrow != null),
+          hasLength(d.arrows),
+        );
       }
     });
   }
@@ -108,9 +127,14 @@ void main() {
       solution: b.solve(30)!,
       moveLimit: 5,
     );
-    expect(p.explain(won: false, movesUsed: 5),
-        'Out of moves. The shortest route takes 4: → ↑ → ↑. The numbers show where each move stops.');
-    expect(p.explain(won: true, movesUsed: 4), startsWith('Shortest route, 4 moves'));
+    expect(
+      p.explain(won: false, movesUsed: 5),
+      'Out of moves. The shortest route takes 4: → ↑ → ↑. The numbers show where each move stops.',
+    );
+    expect(
+      p.explain(won: true, movesUsed: 4),
+      startsWith('Shortest route, 4 moves'),
+    );
     final marks = p.routeMarks();
     expect(marks[33], 1);
     expect(marks[27], 2);

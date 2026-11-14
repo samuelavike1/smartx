@@ -6,6 +6,8 @@ import 'package:smartx/app.dart';
 import 'package:smartx/core/skills/skill.dart';
 import 'package:smartx/core/storage/progress.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
+import 'package:smartx/games/echo_back/echo_controller.dart';
+import 'package:smartx/games/echo_back/echo_puzzle.dart';
 import 'package:smartx/games/grid_recall/grid_recall_controller.dart';
 import 'package:smartx/games/path_finder/path_controller.dart';
 import 'package:smartx/games/path_finder/path_puzzle.dart';
@@ -18,21 +20,21 @@ void main() {
   Future<void> pumpApp(WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    container = ProviderContainer(overrides: [
-      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+      ],
+    );
     addTearDown(container.dispose);
     await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const SmartXApp(),
-      ),
+      UncontrolledProviderScope(container: container, child: const SmartXApp()),
     );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Today tab shows the next game and the glass tab bar',
-      (tester) async {
+  testWidgets('Today tab shows the next game and the glass tab bar', (
+    tester,
+  ) async {
     await pumpApp(tester);
     expect(find.byType(GlassNavBar), findsOneWidget);
     expect(find.byKey(const ValueKey('start-training')), findsOneWidget);
@@ -86,8 +88,9 @@ void main() {
     expect(saved.bestScore, greaterThan(0));
   });
 
-  testWidgets('a full Grid Recall session can be played from the Games tab',
-      (tester) async {
+  testWidgets('a full Grid Recall session can be played from the Games tab', (
+    tester,
+  ) async {
     await pumpApp(tester);
     await tester.tap(find.text('Games').last);
     await tester.pumpAndSettle();
@@ -101,7 +104,9 @@ void main() {
       await tester.tap(find.byKey(ValueKey('cell-${puzzle.cells.first}')));
       expect(container.read(gridSessionProvider).taps, isEmpty);
 
-      await tester.pump(puzzle.memorizeDuration + const Duration(milliseconds: 50));
+      await tester.pump(
+        puzzle.memorizeDuration + const Duration(milliseconds: 50),
+      );
       await tester.pumpAndSettle();
       expect(container.read(gridSessionProvider).phase, GridPhase.recall);
 
@@ -126,8 +131,9 @@ void main() {
     expect(container.read(progressProvider).xpFor(Skill.memory), 80);
   });
 
-  testWidgets('a full Deduce session: place shapes, check, see review',
-      (tester) async {
+  testWidgets('a full Deduce session: place shapes, check, see review', (
+    tester,
+  ) async {
     await pumpApp(tester);
     await tester.tap(find.text('Games').last);
     await tester.pumpAndSettle();
@@ -174,8 +180,9 @@ void main() {
     expect(container.read(progressProvider).xpFor(Skill.logic), 50);
   });
 
-  testWidgets('a full Path Finder session: slide with the arrow buttons',
-      (tester) async {
+  testWidgets('a full Path Finder session: slide with the arrow buttons', (
+    tester,
+  ) async {
     await pumpApp(tester);
     await tester.tap(find.text('Games').last);
     await tester.pumpAndSettle();
@@ -188,8 +195,12 @@ void main() {
 
     for (var round = 0; round < PathController.totalRounds; round++) {
       final puzzle = container.read(pathSessionProvider).puzzle;
-      expect(find.textContaining('${puzzle.moveLimit} of ${puzzle.moveLimit} moves left'),
-          findsOneWidget);
+      expect(
+        find.textContaining(
+          '${puzzle.moveLimit} of ${puzzle.moveLimit} moves left',
+        ),
+        findsOneWidget,
+      );
       for (final d in puzzle.solution) {
         final button = find.byKey(ValueKey('move-${d.word}'));
         await tester.ensureVisible(button);
@@ -211,12 +222,60 @@ void main() {
     expect(container.read(progressProvider).xpFor(Skill.problemSolving), 50);
   });
 
+  testWidgets('a full Echo Back session: tap Match on every real match', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Echo Back');
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    // The pushed route builds on the next frame.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Get ready…'), findsOneWidget);
+
+    for (var block = 0; block < EchoController.totalRounds; block++) {
+      await tester.pump(EchoController.getReady);
+      var s = container.read(echoSessionProvider);
+      expect(s.phase, EchoPhase.playing);
+      final match = find.byKey(const ValueKey('echo-square'));
+
+      while (s.phase == EchoPhase.playing) {
+        if (s.block.isTarget(s.step, EchoChannel.square)) {
+          await tester.tap(match);
+          await tester.pump(const Duration(milliseconds: 160));
+          expect(container.read(echoSessionProvider).lastTap?.correct, isTrue);
+        }
+        await tester.pump(s.block.interval);
+        s = container.read(echoSessionProvider);
+      }
+      await tester.pumpAndSettle();
+      expect(s.result!.passed, isTrue);
+      expect(s.result!.falseTaps, isEmpty);
+      expect(find.textContaining('with no false taps'), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('4 of 4 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).xpFor(Skill.memory), 40);
+  });
+
   test('restart puts the piece back and resets moves', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final c = ProviderContainer(overrides: [
-      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+      ],
+    );
     addTearDown(c.dispose);
     final sub = c.listen(pathSessionProvider, (_, _) {});
     addTearDown(sub.close);
@@ -240,9 +299,11 @@ void main() {
   test('a miss is offered as one unscored practice round', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final c = ProviderContainer(overrides: [
-      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+      ],
+    );
     addTearDown(c.dispose);
     final sub = c.listen(patternSessionProvider, (_, _) {});
     addTearDown(sub.close);
@@ -266,8 +327,11 @@ void main() {
     expect(practice.level, results.nearMiss!.level);
 
     ctrl.select(practice.puzzle.answerIndex);
-    expect(c.read(patternSessionProvider).score, results.score,
-        reason: 'practice is not scored');
+    expect(
+      c.read(patternSessionProvider).score,
+      results.score,
+      reason: 'practice is not scored',
+    );
     await ctrl.next();
 
     final back = c.read(patternSessionProvider);
@@ -280,9 +344,11 @@ void main() {
   test('tapping a filled spot sends its shape back; picking swaps', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final c = ProviderContainer(overrides: [
-      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+      ],
+    );
     addTearDown(c.dispose);
     final sub = c.listen(deduceSessionProvider, (_, _) {});
     addTearDown(sub.close);

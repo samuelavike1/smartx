@@ -18,8 +18,11 @@ void main() {
         final p = generator.generate(level: level, seed: seed);
         expect(p.size, d.size);
         expect(p.cells, hasLength(d.cellCount));
-        expect(p.cells.toSet(), hasLength(p.cells.length),
-            reason: 'lit cells must be distinct');
+        expect(
+          p.cells.toSet(),
+          hasLength(p.cells.length),
+          reason: 'lit cells must be distinct',
+        );
         expect(p.cells.every((c) => c >= 0 && c < p.size * p.size), isTrue);
         expect(p.cells.length, lessThanOrEqualTo(p.size * p.size * 0.45));
         expect(p.ordered, d.ordered);
@@ -35,12 +38,24 @@ void main() {
   });
 
   test('free-order recall ignores tap order; ordered recall does not', () {
-    const free = GridPuzzle(level: 1, seed: 0, size: 3, cells: [0, 4, 8], ordered: false);
+    const free = GridPuzzle(
+      level: 1,
+      seed: 0,
+      size: 3,
+      cells: [0, 4, 8],
+      ordered: false,
+    );
     expect(free.isCorrect([8, 0, 4]), isTrue);
     expect(free.isCorrect([8, 0, 5]), isFalse);
     expect(free.explain([8, 0, 5]), contains('found 2 of 3'));
 
-    const ordered = GridPuzzle(level: 9, seed: 0, size: 3, cells: [0, 4, 8], ordered: true);
+    const ordered = GridPuzzle(
+      level: 9,
+      seed: 0,
+      size: 3,
+      cells: [0, 4, 8],
+      ordered: true,
+    );
     expect(ordered.isCorrect([0, 4, 8]), isTrue);
     expect(ordered.isCorrect([0, 8, 4]), isFalse);
     expect(ordered.explain([0, 8, 4]), contains('step 2 of 3'));

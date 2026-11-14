@@ -30,15 +30,21 @@ void main() {
         final p = generator.generate(level: level, seed: seed);
 
         expect(p.options, hasLength(difficulty.optionCount));
-        expect(p.options.toSet(), hasLength(p.options.length),
-            reason: 'options must be distinct (seed $seed)');
+        expect(
+          p.options.toSet(),
+          hasLength(p.options.length),
+          reason: 'options must be distinct (seed $seed)',
+        );
         expect(p.visible.length, inInclusiveRange(4, 8));
 
         for (var i = 0; i < p.visible.length; i++) {
           expect(p.visible[i], expectedAt(p, i));
         }
-        expect(p.answer, expectedAt(p, p.visible.length),
-            reason: 'answer must continue the rules (seed $seed)');
+        expect(
+          p.answer,
+          expectedAt(p, p.visible.length),
+          reason: 'answer must continue the rules (seed $seed)',
+        );
 
         final varying = p.rules.where((r) => r.isVarying).length;
         expect(varying, difficulty.varyingAttributes);

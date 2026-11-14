@@ -1,4 +1,5 @@
 import '../../games/deduce/deduce_game.dart';
+import '../../games/echo_back/echo_back_game.dart';
 import '../../games/grid_recall/grid_recall_game.dart';
 import '../../games/path_finder/path_finder_game.dart';
 import '../../games/pattern_sequence/pattern_sequence_game.dart';
@@ -10,6 +11,7 @@ const List<GameDefinition> gameRegistry = [
   GridRecallGame(),
   DeduceGame(),
   PathFinderGame(),
+  EchoBackGame(),
 ];
 
 GameDefinition? findGame(String id) {
