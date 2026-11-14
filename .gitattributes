@@ -1,0 +1,9 @@
+# Keep line endings consistent (dart format writes LF) on every OS.
+* text=auto eol=lf
+
+# Binary assets
+*.ttf binary
+*.png binary
+*.jpg binary
+*.jar binary
+*.ico binary

@@ -1,0 +1,306 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smartx/app.dart';
+import 'package:smartx/core/skills/skill.dart';
+import 'package:smartx/core/storage/progress.dart';
+import 'package:smartx/games/deduce/deduce_controller.dart';
+import 'package:smartx/games/grid_recall/grid_recall_controller.dart';
+import 'package:smartx/games/path_finder/path_controller.dart';
+import 'package:smartx/games/path_finder/path_puzzle.dart';
+import 'package:smartx/games/pattern_sequence/pattern_sequence_controller.dart';
+import 'package:smartx/ui/widgets/glass_nav_bar.dart';
+
+void main() {
+  late ProviderContainer container;
+
+  Future<void> pumpApp(WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    container = ProviderContainer(overrides: [
+      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+    ]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const SmartXApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Today tab shows the next game and the glass tab bar',
+      (tester) async {
+    await pumpApp(tester);
+    expect(find.byType(GlassNavBar), findsOneWidget);
+    expect(find.byKey(const ValueKey('start-training')), findsOneWidget);
+    expect(find.text('Pattern Sequence'), findsWidgets);
+  });
+
+  testWidgets('tabs switch screens', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Skills').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Every 100 XP is a new skill level.'), findsOneWidget);
+
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Sessions played'), findsOneWidget);
+  });
+
+  testWidgets('a full session can be played and is saved', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.byKey(const ValueKey('start-training')));
+    await tester.pumpAndSettle();
+    expect(find.text('What comes next?'), findsOneWidget);
+    // Games run full screen: no tab bar.
+    expect(find.byType(GlassNavBar), findsNothing);
+
+    for (var round = 0; round < PatternSessionController.totalRounds; round++) {
+      final answer = container.read(patternSessionProvider).puzzle.answerIndex;
+      await tester.tap(find.byKey(ValueKey('option-$answer')));
+      await tester.pumpAndSettle();
+      expect(find.text('Correct!'), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+
+    // Results, per the artboard: workout progress, accuracy + best, the way on.
+    expect(find.text('WORKOUT · GAME 1 OF 3 DONE'), findsOneWidget);
+    expect(find.text('10 of 10 correct · new personal best'), findsOneWidget);
+    expect(find.text('Skill XP earned'), findsOneWidget);
+    expect(find.text('+100 XP'), findsOneWidget); // main skill
+    expect(find.text('+50 XP'), findsNWidgets(2)); // the other two
+    expect(find.text('Next game: Grid Recall'), findsOneWidget);
+    expect(find.byKey(const ValueKey('try-similar')), findsNothing);
+    expect(container.read(patternSessionProvider).combo, 10);
+
+    final saved = container.read(progressProvider).forGame('pattern_sequence');
+    expect(saved.sessions, 1);
+    expect(saved.level, greaterThan(1));
+    expect(saved.bestScore, greaterThan(0));
+  });
+
+  testWidgets('a full Grid Recall session can be played from the Games tab',
+      (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Grid Recall'));
+    await tester.pumpAndSettle();
+    expect(find.text('Watch the cells'), findsOneWidget);
+
+    for (var round = 0; round < GridRecallController.totalRounds; round++) {
+      final puzzle = container.read(gridSessionProvider).puzzle;
+      // Cells can't be tapped while the pattern is showing.
+      await tester.tap(find.byKey(ValueKey('cell-${puzzle.cells.first}')));
+      expect(container.read(gridSessionProvider).taps, isEmpty);
+
+      await tester.pump(puzzle.memorizeDuration + const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+      expect(container.read(gridSessionProvider).phase, GridPhase.recall);
+
+      for (final cell in puzzle.cells) {
+        await tester.tap(find.byKey(ValueKey('cell-$cell')));
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Correct!'), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('WORKOUT · GAME 1 OF 3 DONE'), findsOneWidget);
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final saved = container.read(progressProvider).forGame('grid_recall');
+    expect(saved.sessions, 1);
+    expect(container.read(progressProvider).xpFor(Skill.memory), 80);
+  });
+
+  testWidgets('a full Deduce session: place shapes, check, see review',
+      (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deduce'));
+    await tester.pumpAndSettle();
+    expect(find.text('Who goes where?'), findsOneWidget);
+
+    for (var round = 0; round < DeduceController.totalRounds; round++) {
+      final puzzle = container.read(deduceSessionProvider).puzzle;
+
+      // Check stays disabled until every spot is filled.
+      final check = find.byKey(const ValueKey('check'));
+      await tester.ensureVisible(check);
+      await tester.pumpAndSettle();
+      expect(tester.widget<FilledButton>(check).onPressed, isNull);
+
+      for (final (i, item) in puzzle.solution.indexed) {
+        final tray = find.byKey(ValueKey('tray-${item.name}'));
+        await tester.ensureVisible(tray);
+        await tester.pumpAndSettle();
+        await tester.tap(tray);
+        await tester.pump();
+        await tester.tap(find.byKey(ValueKey('slot-$i')));
+        await tester.pumpAndSettle();
+      }
+      await tester.ensureVisible(check);
+      await tester.pumpAndSettle();
+      await tester.tap(check);
+      await tester.pumpAndSettle();
+      expect(find.text('Correct!'), findsOneWidget);
+      expect(find.text('YOUR ANSWER'), findsOneWidget);
+      expect(find.text('SOLUTION'), findsNothing);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('WORKOUT · GAME 1 OF 3 DONE'), findsOneWidget);
+    expect(find.text('5 of 5 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).forGame('deduce').sessions, 1);
+    expect(container.read(progressProvider).xpFor(Skill.logic), 50);
+  });
+
+  testWidgets('a full Path Finder session: slide with the arrow buttons',
+      (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Path Finder');
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+    expect(find.text('Reach the flag'), findsOneWidget);
+
+    for (var round = 0; round < PathController.totalRounds; round++) {
+      final puzzle = container.read(pathSessionProvider).puzzle;
+      expect(find.textContaining('${puzzle.moveLimit} of ${puzzle.moveLimit} moves left'),
+          findsOneWidget);
+      for (final d in puzzle.solution) {
+        final button = find.byKey(ValueKey('move-${d.word}'));
+        await tester.ensureVisible(button);
+        await tester.pumpAndSettle();
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+      }
+      expect(container.read(pathSessionProvider).won, isTrue);
+      expect(find.text('Correct!'), findsOneWidget);
+      expect(find.textContaining('Shortest route'), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('5 of 5 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).xpFor(Skill.problemSolving), 50);
+  });
+
+  test('restart puts the piece back and resets moves', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(overrides: [
+      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+    ]);
+    addTearDown(c.dispose);
+    final sub = c.listen(pathSessionProvider, (_, _) {});
+    addTearDown(sub.close);
+    final ctrl = c.read(pathSessionProvider.notifier);
+    final s0 = c.read(pathSessionProvider);
+
+    // Make any real move (the first that isn't blocked).
+    for (final d in Dir.values) {
+      if (ctrl.move(d)) break;
+    }
+    final s1 = c.read(pathSessionProvider);
+    expect(s1.movesUsed, 1);
+
+    ctrl.restart();
+    final s2 = c.read(pathSessionProvider);
+    expect(s2.pos, s0.puzzle.start);
+    expect(s2.movesUsed, 0);
+    expect(s2.trail, isEmpty);
+  });
+
+  test('a miss is offered as one unscored practice round', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(overrides: [
+      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+    ]);
+    addTearDown(c.dispose);
+    final sub = c.listen(patternSessionProvider, (_, _) {});
+    addTearDown(sub.close);
+    final ctrl = c.read(patternSessionProvider.notifier);
+
+    for (var r = 0; r < PatternSessionController.totalRounds; r++) {
+      final s = c.read(patternSessionProvider);
+      final answer = s.puzzle.answerIndex;
+      ctrl.select(r == 2 ? (answer + 1) % s.puzzle.options.length : answer);
+      await ctrl.next();
+    }
+    final results = c.read(patternSessionProvider);
+    expect(results.finished, isTrue);
+    expect(results.nearMiss?.round, 3);
+    expect(results.correctCount, 9);
+
+    ctrl.trySimilar();
+    final practice = c.read(patternSessionProvider);
+    expect(practice.practice, isTrue);
+    expect(practice.finished, isFalse);
+    expect(practice.level, results.nearMiss!.level);
+
+    ctrl.select(practice.puzzle.answerIndex);
+    expect(c.read(patternSessionProvider).score, results.score,
+        reason: 'practice is not scored');
+    await ctrl.next();
+
+    final back = c.read(patternSessionProvider);
+    expect(back.finished, isTrue);
+    expect(back.nearMiss, isNull, reason: 'one practice round only');
+    expect(back.score, results.score);
+    expect(c.read(progressProvider).forGame('pattern_sequence').sessions, 1);
+  });
+
+  test('tapping a filled spot sends its shape back; picking swaps', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(overrides: [
+      progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+    ]);
+    addTearDown(c.dispose);
+    final sub = c.listen(deduceSessionProvider, (_, _) {});
+    addTearDown(sub.close);
+    final ctrl = c.read(deduceSessionProvider.notifier);
+    final first = c.read(deduceSessionProvider).puzzle.tray.first;
+    final second = c.read(deduceSessionProvider).puzzle.tray[1];
+
+    ctrl.pick(first);
+    ctrl.tapSpot(0);
+    expect(c.read(deduceSessionProvider).placed.first, first);
+    expect(c.read(deduceSessionProvider).tray, isNot(contains(first)));
+
+    ctrl.pick(second);
+    ctrl.tapSpot(0); // replaces: first goes back to the tray
+    expect(c.read(deduceSessionProvider).placed.first, second);
+    expect(c.read(deduceSessionProvider).tray, contains(first));
+
+    ctrl.tapSpot(0); // nothing picked: send it back
+    expect(c.read(deduceSessionProvider).placed.first, isNull);
+  });
+}
