@@ -60,6 +60,11 @@ class Frac implements Comparable<Frac> {
   @override
   int compareTo(Frac o) => (n * o.d).compareTo(o.n * d);
 
+  bool operator <(Frac o) => compareTo(o) < 0;
+  bool operator >(Frac o) => compareTo(o) > 0;
+  bool operator <=(Frac o) => compareTo(o) <= 0;
+  bool operator >=(Frac o) => compareTo(o) >= 0;
+
   @override
   bool operator ==(Object other) =>
       other is Frac && other.n == n && other.d == d;

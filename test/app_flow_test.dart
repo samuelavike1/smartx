@@ -9,6 +9,8 @@ import 'package:smartx/core/storage/progress.dart';
 import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/arrow_focus/arrow_controller.dart';
 import 'package:smartx/games/arrow_focus/arrow_puzzle.dart';
+import 'package:smartx/games/better_bet/bet_controller.dart';
+import 'package:smartx/games/better_bet/bet_puzzle.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
 import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
@@ -663,6 +665,103 @@ void main() {
     expect(find.text('3 of 3 correct · new personal best'), findsOneWidget);
     expect(container.read(progressProvider).xpFor(Skill.numbers), 30);
   });
+
+  testWidgets('a full Better Bet session: always pick the better bet', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Better Bet');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pumpAndSettle();
+    for (var r = 0; r < BetController.totalRounds; r++) {
+      final q = container.read(betSessionProvider).question;
+      final pick = find.byKey(ValueKey('bet-${q.answer.name}'));
+      await tester.ensureVisible(pick);
+      await tester.tap(pick);
+      await tester.pumpAndSettle();
+      expect(find.text('Working it out'), findsOneWidget);
+      expect(find.text(q.insight), findsOneWidget);
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.numbers), 80);
+    expect(progress.xpFor(Skill.problemSolving), 40);
+  });
+
+  for (final level in [7, 9]) {
+    testWidgets('Better Bet at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.better_bet.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Games').last);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Better Bet'),
+        200,
+        scrollable: find.descendant(
+          of: find.byType(GamesScreen),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Better Bet'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+      // Wrong picks show the longest review; any overflow fails the test.
+      for (var r = 0; r < 4; r++) {
+        final q = container.read(betSessionProvider).question;
+        final wrong = BetPick.values.firstWhere((p) => p != q.answer);
+        final pick = find.byKey(ValueKey('bet-${wrong.name}'));
+        await tester.ensureVisible(pick);
+        await tester.tap(pick);
+        await tester.pumpAndSettle();
+        expect(find.text('Working it out'), findsOneWidget);
+        final next = find.byType(FilledButton);
+        await tester.ensureVisible(next);
+        await tester.pumpAndSettle();
+        await tester.tap(next);
+        await tester.pumpAndSettle();
+      }
+    });
+  }
 
   test('restart puts the piece back and resets moves', () async {
     SharedPreferences.setMockInitialValues({});
