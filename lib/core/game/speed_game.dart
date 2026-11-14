@@ -80,6 +80,10 @@ abstract class SpeedBlock<T extends SpeedTrial<A>, A> {
   /// A block passes at this many right.
   int get passMark => 10;
 
+  /// The same block with other trials (e.g. a short burst for the Quick
+  /// feed). Subclasses return their own type.
+  SpeedBlock<T, A> withTrials(List<T> trials);
+
   SpeedResult evaluate(List<SpeedAnswer<A>> answers) {
     final correct = <bool>[];
     final calm = <double>[], conflict = <double>[];
@@ -129,6 +133,86 @@ abstract class SpeedBlock<T extends SpeedTrial<A>, A> {
 }
 
 enum SpeedPhase { ready, playing, review }
+
+/// Runs trials one at a time: a deadline per trial (running out records no
+/// answer), then a short right/wrong flash before the next. Shared by the
+/// game sessions and the Quick feed's speed cards.
+class TrialRun<A> {
+  TrialRun({
+    required this.answers,
+    required this.limit,
+    required this.onChange,
+    required this.onDone,
+    this.flashFor = SpeedController.flashFor,
+  });
+
+  /// The right answer for each trial, in order.
+  final List<A> answers;
+  final Duration limit;
+  final Duration flashFor;
+
+  /// Called after every change to [index], [given] or [flash].
+  final void Function() onChange;
+
+  /// Called once, after the last trial's flash.
+  final void Function() onDone;
+
+  /// Current trial (−1 before the start).
+  int index = -1;
+  final List<SpeedAnswer<A>> given = [];
+  SpeedFlash<A>? flash;
+
+  final _clock = Stopwatch();
+  Timer? _deadline;
+  Timer? _next;
+  bool _over = false;
+
+  bool get timing => !_over && index >= 0 && flash == null;
+  bool get over => _over;
+
+  void start() => _present(0);
+
+  /// Answers the current trial. Returns whether it was right, or null if
+  /// the answer didn't count (between trials, or after the end).
+  bool? answer(A option) => timing ? _record(option) : null;
+
+  void cancel() {
+    _over = true;
+    _deadline?.cancel();
+    _next?.cancel();
+  }
+
+  void _present(int i) {
+    index = i;
+    flash = null;
+    _clock
+      ..reset()
+      ..start();
+    _deadline?.cancel();
+    _deadline = Timer(limit, () => _record(null));
+    onChange();
+  }
+
+  bool _record(A? option) {
+    _deadline?.cancel();
+    _clock.stop();
+    final correct = option == answers[index];
+    given.add(SpeedAnswer<A>(option, _clock.elapsed));
+    flash = SpeedFlash<A>(index, option, correct);
+    onChange();
+    _next?.cancel();
+    _next = Timer(flashFor, () {
+      final n = index + 1;
+      if (n < answers.length) {
+        _present(n);
+      } else {
+        _over = true;
+        onDone();
+      }
+    });
+    return correct;
+  }
+}
 
 /// The answer just given, shown briefly before the next trial.
 @immutable
@@ -267,9 +351,8 @@ abstract class SpeedController<
   B generate({required int level, required int seed});
 
   final _rng = Random();
-  final _clock = Stopwatch();
   Timer? _timer;
-  Timer? _deadline;
+  TrialRun<A>? _run;
   late DifficultyEngine _engine;
   NearMiss? _lastMiss;
   SpeedSessionState<B, T, A>? _results;
@@ -287,7 +370,7 @@ abstract class SpeedController<
 
   void _cancel() {
     _timer?.cancel();
-    _deadline?.cancel();
+    _run?.cancel();
   }
 
   SpeedSessionState<B, T, A> _fresh({
@@ -317,40 +400,30 @@ abstract class SpeedController<
     _cancel();
     _timer = Timer(getReady, () {
       state = state.copyWith(phase: SpeedPhase.playing);
-      _present(0);
+      final run = TrialRun<A>(
+        answers: [for (final t in state.block.trials) t.answer],
+        limit: state.block.limit,
+        onChange: () => _sync(_run!),
+        onDone: _endBlock,
+      );
+      _run = run;
+      run.start();
     });
   }
 
-  void _present(int i) {
-    state = state.copyWith(index: i, flash: () => null);
-    _clock
-      ..reset()
-      ..start();
-    _deadline?.cancel();
-    _deadline = Timer(state.block.limit, () => _record(null));
+  void _sync(TrialRun<A> run) {
+    state = state.copyWith(
+      index: run.index,
+      answers: List.unmodifiable(run.given),
+      flash: () => run.flash,
+    );
   }
 
   /// Answers the current trial. Returns whether it was right, or null if
   /// the answer didn't count (between trials, or before the start).
   bool? answer(A option) {
     if (!state.timing) return null;
-    return _record(option);
-  }
-
-  bool _record(A? option) {
-    _deadline?.cancel();
-    _clock.stop();
-    final correct = option == state.trial!.answer;
-    state = state.copyWith(
-      answers: [...state.answers, SpeedAnswer<A>(option, _clock.elapsed)],
-      flash: () => SpeedFlash<A>(state.index, option, correct),
-    );
-    _timer?.cancel();
-    _timer = Timer(flashFor, () {
-      final next = state.index + 1;
-      next < state.block.length ? _present(next) : _endBlock();
-    });
-    return correct;
+    return _run?.answer(option);
   }
 
   void _endBlock() {

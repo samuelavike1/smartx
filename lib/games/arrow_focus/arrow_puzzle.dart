@@ -141,6 +141,15 @@ class ArrowBlock extends SpeedBlock<ArrowTrial, ArrowDir> {
   @override
   int get passMark => ArrowDifficulty.passMark;
 
+  @override
+  ArrowBlock withTrials(List<ArrowTrial> trials) => ArrowBlock(
+    level: level,
+    seed: seed,
+    trials: trials,
+    limit: limit,
+    fourWays: fourWays,
+  );
+
   List<ArrowDir> get directions =>
       fourWays ? ArrowDir.values : const [ArrowDir.left, ArrowDir.right];
 

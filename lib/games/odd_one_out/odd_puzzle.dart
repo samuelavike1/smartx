@@ -208,6 +208,15 @@ class OddBlock extends SpeedBlock<OddTrial, int> {
   int get passMark => OddDifficulty.passMark;
 
   @override
+  OddBlock withTrials(List<OddTrial> trials) => OddBlock(
+    level: level,
+    seed: seed,
+    trials: trials,
+    limit: limit,
+    features: features,
+  );
+
+  @override
   String get conflictName => 'Odd shapes, turns and sizes';
 
   @override

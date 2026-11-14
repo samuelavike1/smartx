@@ -104,6 +104,10 @@ class InkBlock extends SpeedBlock<InkTrial, InkColour> {
   bool get flips => trials.any((t) => t.rule == InkRule.word);
 
   @override
+  InkBlock withTrials(List<InkTrial> trials) =>
+      InkBlock(level: level, seed: seed, trials: trials, limit: limit);
+
+  @override
   String get conflictName => 'Clashing words';
 
   @override

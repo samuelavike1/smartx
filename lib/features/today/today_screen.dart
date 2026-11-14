@@ -9,6 +9,7 @@ import '../../ui/density.dart';
 import '../../ui/lucid.dart';
 import '../../ui/widgets/press_scale.dart';
 import '../../ui/widgets/skill_marker.dart';
+import '../feed/feed_plan.dart';
 import 'daily_workout.dart';
 
 // Values come from the "Today (home)" artboard (regular) and the
@@ -79,6 +80,8 @@ class TodayScreen extends ConsumerWidget {
             items: dailyWorkout(progress, now),
             weakest: weakestSkill(progress),
           ),
+          SizedBox(height: d.gapL),
+          const _FeedRow(),
           SizedBox(height: d.gapL),
           _SkillsCard(progress: progress),
           SizedBox(height: d.gapL),
@@ -261,6 +264,77 @@ class _WorkoutRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Opens the Quick feed (row from the Today artboard).
+class _FeedRow extends StatelessWidget {
+  const _FeedRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final d = Dims.of(context);
+    final icon = d.compact ? 40.0 : 44.0;
+    return PressScale(
+      key: const ValueKey('open-feed'),
+      semanticLabel:
+          'Quick feed: ${FeedRules.cards} micro-puzzles, about 5 minutes',
+      onTap: () => context.push('/feed'),
+      child: Container(
+        padding: EdgeInsets.all(d.compact ? 14 : 16),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(d.compact ? 18 : 20),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: icon,
+              height: icon,
+              decoration: BoxDecoration(
+                color: Lucid.sparkTint,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.bolt_rounded,
+                size: icon * 0.55,
+                color: const Color(0xFFB4501A),
+              ),
+            ),
+            SizedBox(width: d.compact ? 12 : 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quick feed',
+                    style: lucidText(
+                      size: d.rowTitle,
+                      weight: 600,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    '${FeedRules.cards} micro-puzzles · about 5 min',
+                    style: lucidText(
+                      size: d.small,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: scheme.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }

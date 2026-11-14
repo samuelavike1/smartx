@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'core/game/game_registry.dart';
+import 'features/feed/feed_screen.dart';
 import 'features/games/games_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/shell/app_shell.dart';
@@ -39,7 +40,9 @@ GoRouter buildRouter() => GoRouter(
         ),
       ],
     ),
-    // Outside the shell: games run full screen, without the tab bar.
+    // Outside the shell: games and the feed run full screen, without the
+    // tab bar.
+    GoRoute(path: '/feed', builder: (_, _) => const FeedScreen()),
     GoRoute(
       path: '/game/:id',
       builder: (_, state) {

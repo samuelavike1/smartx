@@ -17,47 +17,54 @@ import 'odd_puzzle.dart';
 class OddScreen extends StatelessWidget {
   const OddScreen({super.key});
 
-  /// Side of the square grid.
-  static double gridSize(BuildContext context) {
-    final cap = Dims.of(context).compact ? 288.0 : 356.0;
-    return min(MediaQuery.sizeOf(context).width - 32, cap);
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return SpeedGameScreen<OddBlock, OddTrial, int>(
-      provider: oddSessionProvider,
-      game: const OddOneOutGame(),
-      cue: (_) => const SpeedCue('TAP THE ODD ONE'),
-      stimulusHeight: gridSize,
-      stimulus: (context, s, t, press) => _Grid(
-        trial: t,
-        size: gridSize(context),
-        markFor: s.markFor,
-        onTap: press,
-      ),
-      hint: (s) =>
-          'Tap the one tile that\'s different: ${oddWays(s.block.features)}.',
-      review: SpeedReviewText(
-        item: 'Grid',
-        calm: 'Odd colour',
-        conflict: 'Odd shape, turn or size',
-        cost: (secs) => 'Searching cost you $secs s a grid.',
-        noCost: 'Searching didn\'t slow you down. Sharp eyes.',
-      ),
-      reviewExtra: (context, s) {
-        final first = s.block.firstMiss(s.result!);
-        if (first < 0) return null;
-        final a = first < s.answers.length ? s.answers[first] : null;
-        return _MissedGrid(
-          number: first + 1,
-          trial: s.block.trials[first],
-          tapped: a?.tapped,
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) =>
+      SpeedGameScreen<OddBlock, OddTrial, int>(
+        provider: oddSessionProvider,
+        game: const OddOneOutGame(),
+        ui: oddUi,
+      );
 }
+
+/// Largest grid side for the screen (the game screen's fixed height).
+double _gridCap(BuildContext context) {
+  final cap = Dims.of(context).compact ? 288.0 : 356.0;
+  return min(MediaQuery.sizeOf(context).width - 32, cap);
+}
+
+/// Odd One Out's look: used by its screen and its Quick feed cards. The
+/// grid fits the space it's given (a full screen or a feed card).
+final oddUi = SpeedUi<OddBlock, OddTrial, int>(
+  cue: (_) => const SpeedCue('TAP THE ODD ONE'),
+  stimulusHeight: _gridCap,
+  stimulus: (context, s, t, press) => LayoutBuilder(
+    builder: (context, c) => _Grid(
+      trial: t,
+      size: [_gridCap(context), c.maxWidth, c.maxHeight].reduce(min),
+      markFor: s.markFor,
+      onTap: press,
+    ),
+  ),
+  hint: (s) =>
+      'Tap the one tile that\'s different: ${oddWays(s.block.features)}.',
+  review: SpeedReviewText(
+    item: 'Grid',
+    calm: 'Odd colour',
+    conflict: 'Odd shape, turn or size',
+    cost: (secs) => 'Searching cost you $secs s a grid.',
+    noCost: 'Searching didn\'t slow you down. Sharp eyes.',
+  ),
+  reviewExtra: (context, s) {
+    final first = s.block.firstMiss(s.result!);
+    if (first < 0) return null;
+    final a = first < s.answers.length ? s.answers[first] : null;
+    return _MissedGrid(
+      number: first + 1,
+      trial: s.block.trials[first],
+      tapped: a?.tapped,
+    );
+  },
+);
 
 double _gap(int side, bool compact) => switch (side) {
   <= 4 => compact ? 10 : 12,

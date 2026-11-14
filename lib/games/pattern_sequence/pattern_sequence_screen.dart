@@ -132,9 +132,10 @@ class _RoundView extends ConsumerWidget {
               for (final (i, option) in puzzle.options.indexed) ...[
                 if (i > 0) const SizedBox(width: 12),
                 Expanded(
-                  child: _OptionTile(
+                  child: PatternOptionTile(
                     key: ValueKey('option-$i'),
                     token: option,
+                    label: 'Option ${i + 1}',
                     isAnswer: i == puzzle.answerIndex,
                     selected: state.selectedIndex == i,
                     answered: state.answered,
@@ -162,14 +163,17 @@ class _RoundView extends ConsumerWidget {
   }
 }
 
-class _OptionTile extends StatelessWidget {
-  const _OptionTile({
+/// An answer option: a token tile that marks right/wrong once answered.
+/// Also used by the Quick feed's pattern cards.
+class PatternOptionTile extends StatelessWidget {
+  const PatternOptionTile({
     super.key,
     required this.token,
     required this.isAnswer,
     required this.selected,
     required this.answered,
     required this.onTap,
+    this.label,
   });
 
   final PatternToken token;
@@ -177,6 +181,10 @@ class _OptionTile extends StatelessWidget {
   final bool selected;
   final bool answered;
   final VoidCallback? onTap;
+
+  /// Read by screen readers ("Option 2"), with "right" or "wrong" added
+  /// once answered.
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +221,17 @@ class _OptionTile extends StatelessWidget {
         scale: showCorrect ? 1.06 : 1,
         child: Shake(
           active: showMiss,
-          child: PressScale(onTap: onTap, child: tile),
+          child: PressScale(
+            semanticLabel: label == null
+                ? null
+                : showCorrect
+                ? '$label, right answer'
+                : showMiss
+                ? '$label, wrong'
+                : label,
+            onTap: onTap,
+            child: tile,
+          ),
         ),
       ),
     );

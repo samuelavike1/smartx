@@ -84,6 +84,12 @@ class ProgressRepository {
 
   Future<void> saveSkillXp(Skill skill, int xp) =>
       _prefs.setInt('skill.${skill.name}.xp', xp);
+
+  /// Percent right for [skill] in the last finished Quick feed, if any.
+  int? feedAccuracy(Skill skill) => _prefs.getInt('feed.${skill.name}.pct');
+
+  Future<void> saveFeedAccuracy(Skill skill, int percent) =>
+      _prefs.setInt('feed.${skill.name}.pct', percent);
 }
 
 /// Overridden in `main()` once SharedPreferences is loaded.
@@ -123,6 +129,18 @@ class ProgressNotifier extends Notifier<ProgressSnapshot> {
     await repo.saveGame(result.gameId, updatedGame);
     for (final skill in result.skills) {
       await repo.saveSkillXp(skill, updatedXp[skill]!);
+    }
+  }
+
+  /// Adds XP earned outside a game session (the Quick feed). Game levels,
+  /// best scores and "played today" are left alone.
+  Future<void> addXp(Map<Skill, int> xp) async {
+    final repo = ref.read(progressRepositoryProvider);
+    final updated = {...state.skillXp};
+    xp.forEach((skill, n) => updated[skill] = (updated[skill] ?? 0) + n);
+    state = ProgressSnapshot(games: state.games, skillXp: updated);
+    for (final skill in xp.keys) {
+      await repo.saveSkillXp(skill, updated[skill]!);
     }
   }
 }

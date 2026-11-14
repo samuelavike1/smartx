@@ -48,12 +48,10 @@ class SpeedCue {
   final bool outlined;
 }
 
-class SpeedGameScreen<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
-    extends ConsumerWidget {
-  const SpeedGameScreen({
-    super.key,
-    required this.provider,
-    required this.game,
+/// How a speed game looks: its cue, stimulus, buttons and wording. Used by
+/// the game's own screen and by its cards in the Quick feed.
+class SpeedUi<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A> {
+  const SpeedUi({
     required this.cue,
     required this.stimulus,
     required this.stimulusHeight,
@@ -64,9 +62,6 @@ class SpeedGameScreen<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
     this.swipe,
   });
 
-  final NotifierProvider<SpeedController<B, T, A>, SpeedSessionState<B, T, A>>
-  provider;
-  final GameDefinition game;
   final SpeedCue Function(SpeedSessionState<B, T, A> s) cue;
 
   /// The trial itself; only built while there is one. Games answered by
@@ -99,6 +94,21 @@ class SpeedGameScreen<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
 
   /// Maps a swipe (finger travel) to an answer, or null to ignore it.
   final A? Function(SpeedSessionState<B, T, A> s, Offset travel)? swipe;
+}
+
+class SpeedGameScreen<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
+    extends ConsumerWidget {
+  const SpeedGameScreen({
+    super.key,
+    required this.provider,
+    required this.game,
+    required this.ui,
+  });
+
+  final NotifierProvider<SpeedController<B, T, A>, SpeedSessionState<B, T, A>>
+  provider;
+  final GameDefinition game;
+  final SpeedUi<B, T, A> ui;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -146,29 +156,9 @@ class _SpeedRound<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
 
 class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
     extends ConsumerState<_SpeedRound<B, T, A>> {
-  // Swipes are read from raw pointer events so they never fight the
-  // body's scroll view or the buttons.
-  final _downs = <int, (Offset, Duration)>{};
-
-  static const _minTravel = 40.0;
-  static const _maxSwipeTime = Duration(milliseconds: 600);
-
   void _press(A option) {
     final correct = ref.read(widget.screen.provider.notifier).answer(option);
-    if (correct == null) return;
-    correct ? HapticFeedback.lightImpact() : HapticFeedback.mediumImpact();
-  }
-
-  void _up(PointerUpEvent e) {
-    final down = _downs.remove(e.pointer);
-    final swipe = widget.screen.swipe;
-    if (down == null || swipe == null) return;
-    final travel = e.position - down.$1;
-    if (travel.distance < _minTravel || e.timeStamp - down.$2 > _maxSwipeTime) {
-      return;
-    }
-    final option = swipe(widget.state, travel);
-    if (option != null) _press(option);
+    speedHaptic(correct);
   }
 
   @override
@@ -199,8 +189,8 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
               length: state.block.length,
               limit: state.block.limit,
               result: state.result!,
-              text: screen.review,
-              extra: screen.reviewExtra?.call(context, state),
+              text: screen.ui.review,
+              extra: screen.ui.reviewExtra?.call(context, state),
             )
           : _Prompt<B, T, A>(screen: screen, state: state, press: _press),
       dock: !state.answered
@@ -209,14 +199,14 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  screen.hint(state),
+                  screen.ui.hint(state),
                   textAlign: TextAlign.center,
                   style: lucidText(
                     size: d.small,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                if (screen.controls case final controls?) ...[
+                if (screen.ui.controls case final controls?) ...[
                   SizedBox(height: d.gapS),
                   controls(context, state, _press),
                 ],
@@ -233,15 +223,99 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
             ),
     );
 
-    if (screen.swipe == null || state.answered) return layout;
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (e) => _downs[e.pointer] = (e.position, e.timeStamp),
-      onPointerUp: _up,
-      onPointerCancel: (e) => _downs.remove(e.pointer),
+    final swipe = screen.ui.swipe;
+    if (swipe == null || state.answered) return layout;
+    return SwipeArea(
+      onSwipe: (travel) {
+        final option = swipe(state, travel);
+        if (option != null) _press(option);
+      },
       child: layout,
     );
   }
+}
+
+/// Light haptic for a right answer, medium for a wrong one, none when the
+/// answer didn't count (null).
+void speedHaptic(bool? correct) {
+  if (correct == null) return;
+  correct ? HapticFeedback.lightImpact() : HapticFeedback.mediumImpact();
+}
+
+/// Reports quick swipes anywhere on [child]. Read from raw pointer events,
+/// so it never fights scroll views or buttons underneath.
+class SwipeArea extends StatefulWidget {
+  const SwipeArea({super.key, required this.onSwipe, required this.child});
+
+  /// Called with the finger's travel for a swipe of at least 40 px made in
+  /// under 0.6 s.
+  final void Function(Offset travel) onSwipe;
+  final Widget child;
+
+  @override
+  State<SwipeArea> createState() => _SwipeAreaState();
+}
+
+class _SwipeAreaState extends State<SwipeArea> {
+  final _downs = <int, (Offset, Duration)>{};
+
+  static const _minTravel = 40.0;
+  static const _maxSwipeTime = Duration(milliseconds: 600);
+
+  void _up(PointerUpEvent e) {
+    final down = _downs.remove(e.pointer);
+    if (down == null) return;
+    final travel = e.position - down.$1;
+    if (travel.distance < _minTravel || e.timeStamp - down.$2 > _maxSwipeTime) {
+      return;
+    }
+    widget.onSwipe(travel);
+  }
+
+  @override
+  Widget build(BuildContext context) => Listener(
+    behavior: HitTestBehavior.translucent,
+    onPointerDown: (e) => _downs[e.pointer] = (e.position, e.timeStamp),
+    onPointerUp: _up,
+    onPointerCancel: (e) => _downs.remove(e.pointer),
+    child: widget.child,
+  );
+}
+
+/// Swaps the stimulus for each new trial with a quick scale-in. The
+/// outgoing trial can't be tapped while it fades, or a quick tap could
+/// answer the new trial from the old one.
+class SpeedStimulusSwitcher extends StatelessWidget {
+  const SpeedStimulusSwitcher({
+    super.key,
+    required this.index,
+    required this.child,
+  });
+
+  /// The trial shown; a new value swaps the stimulus.
+  final int index;
+
+  /// The stimulus, or null for none (before the first trial).
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+    duration: const Duration(milliseconds: 140),
+    transitionBuilder: (child, a) => ScaleTransition(
+      scale: Tween(begin: 0.85, end: 1.0).animate(a),
+      child: child,
+    ),
+    layoutBuilder: (current, previous) => Stack(
+      alignment: Alignment.center,
+      children: [
+        for (final p in previous) IgnorePointer(child: p),
+        ?current,
+      ],
+    ),
+    child: child == null
+        ? const SizedBox.shrink()
+        : KeyedSubtree(key: ValueKey(index), child: child!),
+  );
 }
 
 class _Prompt<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
@@ -261,7 +335,7 @@ class _Prompt<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
     final scheme = Theme.of(context).colorScheme;
     final d = Dims.of(context);
     final t = state.trial;
-    final cue = screen.cue(state);
+    final cue = screen.ui.cue(state);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -270,7 +344,7 @@ class _Prompt<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
         Text(
           state.phase == SpeedPhase.ready
               ? 'Get ready…'
-              : '${screen.review.item} ${state.index + 1} of '
+              : '${screen.ui.review.item} ${state.index + 1} of '
                     '${state.block.length}',
           style: lucidText(size: d.small + 1, color: scheme.onSurfaceVariant),
         ),
@@ -281,29 +355,13 @@ class _Prompt<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
         ),
         SizedBox(height: d.gapL),
         SizedBox(
-          height: screen.stimulusHeight(context),
+          height: screen.ui.stimulusHeight(context),
           child: Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 140),
-              transitionBuilder: (child, a) => ScaleTransition(
-                scale: Tween(begin: 0.85, end: 1.0).animate(a),
-                child: child,
-              ),
-              // The outgoing trial can't be tapped while it fades, or a
-              // quick tap could answer the new trial from the old one.
-              layoutBuilder: (current, previous) => Stack(
-                alignment: Alignment.center,
-                children: [
-                  for (final p in previous) IgnorePointer(child: p),
-                  ?current,
-                ],
-              ),
+            child: SpeedStimulusSwitcher(
+              index: state.index,
               child: t == null
-                  ? const SizedBox.shrink()
-                  : KeyedSubtree(
-                      key: ValueKey(state.index),
-                      child: screen.stimulus(context, state, t, press),
-                    ),
+                  ? null
+                  : screen.ui.stimulus(context, state, t, press),
             ),
           ),
         ),

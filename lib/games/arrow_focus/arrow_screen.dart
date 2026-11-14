@@ -16,57 +16,59 @@ import 'arrow_puzzle.dart';
 class ArrowScreen extends StatelessWidget {
   const ArrowScreen({super.key});
 
-  static double _maxArrow(BuildContext context) =>
-      Dims.of(context).compact ? 32.0 : 38.0;
-
   @override
-  Widget build(BuildContext context) {
-    return SpeedGameScreen<ArrowBlock, ArrowTrial, ArrowDir>(
-      provider: arrowSessionProvider,
-      game: const ArrowFocusGame(),
-      cue: (_) => const SpeedCue('FOLLOW THE MIDDLE'),
-      stimulusHeight: (context) =>
-          _maxArrow(context) + (Dims.of(context).compact ? 36 : 52),
-      stimulus: (context, _, t, _) =>
-          _ArrowRow(trial: t, max: _maxArrow(context)),
-      hint: (_) => 'Swipe or tap the way the middle arrow points.',
-      swipe: (s, travel) =>
-          ArrowDir.fromSwipe(travel, fourWays: s.block.fourWays),
-      controls: (context, s, press) {
-        final d = Dims.of(context);
-        final dirs = s.block.directions;
-        final four = dirs.length == 4;
-        return SizedBox(
-          height: d.compact ? 54 : 64,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (i, dir) in dirs.indexed) ...[
-                if (i > 0) const SizedBox(width: 12),
-                Expanded(
-                  child: SpeedButton(
-                    key: ValueKey('arrow-${dir.name}'),
-                    label: dir.label,
-                    mark: s.markFor(dir),
-                    onTap: () => press(dir),
-                    child: _DirLabel(dir, iconOnly: four),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-      review: SpeedReviewText(
-        item: 'Row',
-        calm: 'Arrows agreed',
-        conflict: 'Arrows disagreed',
-        cost: (secs) => 'The other arrows cost you $secs s a row.',
-        noCost: 'The other arrows didn\'t slow you down. Sharp focus.',
+  Widget build(BuildContext context) =>
+      SpeedGameScreen<ArrowBlock, ArrowTrial, ArrowDir>(
+        provider: arrowSessionProvider,
+        game: const ArrowFocusGame(),
+        ui: arrowUi,
+      );
+}
+
+double _maxArrow(BuildContext context) =>
+    Dims.of(context).compact ? 32.0 : 38.0;
+
+/// Arrow Focus's look: used by its screen and its Quick feed cards.
+final arrowUi = SpeedUi<ArrowBlock, ArrowTrial, ArrowDir>(
+  cue: (_) => const SpeedCue('FOLLOW THE MIDDLE'),
+  stimulusHeight: (context) =>
+      _maxArrow(context) + (Dims.of(context).compact ? 36 : 52),
+  stimulus: (context, _, t, _) => _ArrowRow(trial: t, max: _maxArrow(context)),
+  hint: (_) => 'Swipe or tap the way the middle arrow points.',
+  swipe: (s, travel) => ArrowDir.fromSwipe(travel, fourWays: s.block.fourWays),
+  controls: (context, s, press) {
+    final d = Dims.of(context);
+    final dirs = s.block.directions;
+    final four = dirs.length == 4;
+    return SizedBox(
+      height: d.compact ? 54 : 64,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, dir) in dirs.indexed) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(
+              child: SpeedButton(
+                key: ValueKey('arrow-${dir.name}'),
+                label: dir.label,
+                mark: s.markFor(dir),
+                onTap: () => press(dir),
+                child: _DirLabel(dir, iconOnly: four),
+              ),
+            ),
+          ],
+        ],
       ),
     );
-  }
-}
+  },
+  review: SpeedReviewText(
+    item: 'Row',
+    calm: 'Arrows agreed',
+    conflict: 'Arrows disagreed',
+    cost: (secs) => 'The other arrows cost you $secs s a row.',
+    noCost: 'The other arrows didn\'t slow you down. Sharp focus.',
+  ),
+);
 
 class _ArrowRow extends StatelessWidget {
   const _ArrowRow({required this.trial, required this.max});

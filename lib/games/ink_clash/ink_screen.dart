@@ -13,73 +13,77 @@ import 'ink_puzzle.dart';
 class InkScreen extends StatelessWidget {
   const InkScreen({super.key});
 
-  static double _wordSize(BuildContext context) =>
-      Dims.of(context).compact ? 52.0 : 64.0;
-
   @override
-  Widget build(BuildContext context) {
-    return SpeedGameScreen<InkBlock, InkTrial, InkColour>(
-      provider: inkSessionProvider,
-      game: const InkClashGame(),
-      // The cue: INK (filled pill) or WORD (outlined), so a flip is obvious.
-      cue: (s) {
-        final rule = s.trial?.rule ?? InkRule.ink;
-        return SpeedCue('TAP THE ${rule.cue}', outlined: rule == InkRule.word);
-      },
-      stimulusHeight: (context) => _wordSize(context) * 1.3,
-      stimulus: (context, _, t, _) {
-        final size = _wordSize(context);
-        return Semantics(
-          label:
-              'The word ${t.word.word}, written in ${t.ink.label.toLowerCase()} ink',
-          liveRegion: true,
-          excludeSemantics: true,
-          child: Text(
-            t.word.word,
-            style: lucidText(
-              size: size,
-              weight: 700,
-              display: true,
-              color: t.ink.color,
-              letterSpacing: size * 0.02,
-            ),
-          ),
-        );
-      },
-      hint: (s) => s.block.flips
-          ? 'Follow the cue: tap the ink, or tap the word.'
-          : 'Tap the colour of the ink, not the word.',
-      controls: (context, s, press) {
-        final d = Dims.of(context);
-        return GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: d.compact ? 3.4 : 2.9,
-          children: [
-            for (final colour in InkColour.values)
-              SpeedButton(
-                key: ValueKey('ink-${colour.name}'),
-                label: colour.label,
-                mark: s.markFor(colour),
-                onTap: () => press(colour),
-                child: _ColourLabel(colour),
-              ),
-          ],
-        );
-      },
-      review: SpeedReviewText(
-        item: 'Word',
-        calm: 'Matching words',
-        conflict: 'Clashing words',
-        cost: (secs) => 'The clash cost you $secs s a word.',
-        noCost: 'Clashing words didn\'t slow you down. Sharp focus.',
+  Widget build(BuildContext context) =>
+      SpeedGameScreen<InkBlock, InkTrial, InkColour>(
+        provider: inkSessionProvider,
+        game: const InkClashGame(),
+        ui: inkUi,
+      );
+}
+
+double _wordSize(BuildContext context) =>
+    Dims.of(context).compact ? 52.0 : 64.0;
+
+/// Ink Clash's look: used by its screen and its Quick feed cards.
+final inkUi = SpeedUi<InkBlock, InkTrial, InkColour>(
+  // The cue: INK (filled pill) or WORD (outlined), so a flip is obvious.
+  cue: (s) {
+    final rule = s.trial?.rule ?? InkRule.ink;
+    return SpeedCue('TAP THE ${rule.cue}', outlined: rule == InkRule.word);
+  },
+  stimulusHeight: (context) => _wordSize(context) * 1.3,
+  stimulus: (context, _, t, _) {
+    final size = _wordSize(context);
+    return Semantics(
+      label:
+          'The word ${t.word.word}, written in ${t.ink.label.toLowerCase()} ink',
+      liveRegion: true,
+      excludeSemantics: true,
+      child: Text(
+        t.word.word,
+        style: lucidText(
+          size: size,
+          weight: 700,
+          display: true,
+          color: t.ink.color,
+          letterSpacing: size * 0.02,
+        ),
       ),
     );
-  }
-}
+  },
+  hint: (s) => s.block.flips
+      ? 'Follow the cue: tap the ink, or tap the word.'
+      : 'Tap the colour of the ink, not the word.',
+  controls: (context, s, press) {
+    final d = Dims.of(context);
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: d.compact ? 3.4 : 2.9,
+      children: [
+        for (final colour in InkColour.values)
+          SpeedButton(
+            key: ValueKey('ink-${colour.name}'),
+            label: colour.label,
+            mark: s.markFor(colour),
+            onTap: () => press(colour),
+            child: _ColourLabel(colour),
+          ),
+      ],
+    );
+  },
+  review: SpeedReviewText(
+    item: 'Word',
+    calm: 'Matching words',
+    conflict: 'Clashing words',
+    cost: (secs) => 'The clash cost you $secs s a word.',
+    noCost: 'Clashing words didn\'t slow you down. Sharp focus.',
+  ),
+);
 
 class _ColourLabel extends StatelessWidget {
   const _ColourLabel(this.colour);
