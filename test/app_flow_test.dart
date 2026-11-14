@@ -16,6 +16,7 @@ import 'package:smartx/games/better_bet/bet_puzzle.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_puzzle.dart';
 import 'package:smartx/games/best_run/run_controller.dart';
+import 'package:smartx/games/coin_race/coin_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/odds_on/odds_math.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
@@ -1155,6 +1156,80 @@ void main() {
     });
   }
 
+  Future<void> openCoinRace(WidgetTester tester) async {
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Coin Race'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Coin Race'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> answerCoin(WidgetTester tester, {required bool right}) async {
+    final q = container.read(coinSessionProvider).question;
+    final i = right ? q.answerIndex : (q.answerIndex + 1) % 4;
+    await tapKey(tester, 'coin-$i');
+    expect(find.text('Working it out'), findsOneWidget);
+    expect(find.text(q.feedbackFor(q.options[i])), findsOneWidget);
+    final next = find.byType(FilledButton);
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Coin Race session: every answer right', (tester) async {
+    await pumpApp(tester);
+    await openCoinRace(tester);
+    for (var r = 0; r < CoinController.totalRounds; r++) {
+      await answerCoin(tester, right: true);
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.numbers), 80);
+    expect(progress.xpFor(Skill.logic), 40);
+  });
+
+  for (final level in [5, 6, 9, 10]) {
+    testWidgets('Coin Race at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.coin_race.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openCoinRace(tester);
+      for (var r = 0; r < 4; r++) {
+        await answerCoin(tester, right: false);
+      }
+    });
+  }
   test('restart puts the piece back and resets moves', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();

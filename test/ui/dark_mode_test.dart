@@ -10,6 +10,7 @@ import 'package:smartx/features/feed/feed_controller.dart';
 import 'package:smartx/features/feed/feed_plan.dart';
 import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/best_run/run_controller.dart';
+import 'package:smartx/games/coin_race/coin_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
@@ -239,6 +240,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(container.read(runSessionProvider).answered, isTrue);
       expectNoDayColours(tester, 'Best Run level $level review');
+    });
+  }
+  for (final level in [2, 6, 7]) {
+    testWidgets('Coin Race at level $level and its reviews are dark', (
+      tester,
+    ) async {
+      await pumpDark(tester, {'game.coin_race.level': level});
+      await openGame(tester, 'Coin Race');
+      await tester.pumpAndSettle();
+      final c = container.read(coinSessionProvider.notifier);
+      for (var r = 0; r < 2; r++) {
+        expectNoDayColours(tester, 'Coin Race question');
+        final q = container.read(coinSessionProvider).question;
+        c.select(r.isEven ? q.answerIndex : (q.answerIndex + 1) % 4);
+        await tester.pumpAndSettle();
+        expectNoDayColours(tester, 'Coin Race review');
+        await c.next();
+        await tester.pumpAndSettle();
+      }
     });
   }
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
