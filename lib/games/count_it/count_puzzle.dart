@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/game/answer_options.dart';
+
 int fact(int n) => n <= 1 ? 1 : n * fact(n - 1);
 
 int perm(int n, int k) {
@@ -221,6 +223,10 @@ class CountGenerator {
             ipow(n, n),
             '${fmt(ipow(n, n))} lets every spot pick from all $n friends.',
           ),
+          Trap(
+            fact(n + 1),
+            '${fmt(fact(n + 1))} lines up ${n + 1} friends, one too many.',
+          ),
         ];
         steps = [
           'First spot: $n choices. Then ${n - 1}, then ${n - 2}, and so on.',
@@ -380,6 +386,15 @@ class CountGenerator {
           Trap(
             repeat ? ipow(a, len - 1) : perm(a, len - 1),
             'That counts one digit too few.',
+          ),
+          Trap(
+            ipow(len, a),
+            '${fmt(ipow(len, a))} swaps them round: it\'s $a choices for each '
+            'of $len digits, not $len choices for each of $a.',
+          ),
+          Trap(
+            repeat ? ipow(a, len + 1) : perm(a, len + 1),
+            'That counts one digit too many.',
           ),
         ];
         steps = repeat
@@ -735,22 +750,38 @@ class CountGenerator {
         insight = 'Sweets and dividers in a row: choose where the dividers go.';
     }
 
-    // Three named traps that differ from the answer and from each other.
-    final seen = <int>{answer};
-    final picked = <Trap>[];
-    for (final t in traps) {
-      if (picked.length == 3) break;
-      if (t.value > 0 && seen.add(t.value)) picked.add(t);
-    }
-    // Rarely the traps run short: fill with near misses.
-    for (var d = 1; picked.length < 3; d++) {
-      for (final v in [answer + d, answer - d]) {
-        if (picked.length < 3 && v > 0 && seen.add(v)) {
-          picked.add(Trap(v, 'Count it again in steps: see the working.'));
-        }
-      }
-    }
-    final options = [answer, ...picked.map((t) => t.value)]..shuffle(rng);
+    // Three wrong answers, smallest to largest with the answer among them
+    // at a random rank: named traps first, so the biggest (or smallest)
+    // number is never a giveaway. Rarely a side runs short of traps; then
+    // plain near misses fill in.
+    const again = 'Count it again in steps: see the working.';
+    final fillers = [
+      Trap(
+        answer * 2,
+        '${fmt(answer * 2)} counts every case twice, once from each way '
+        'round.',
+      ),
+      if (answer.isEven)
+        Trap(answer ~/ 2, '${fmt(answer ~/ 2)} counts only half the cases.'),
+      Trap(answer + 1, '${fmt(answer + 1)} is one too many: an off-by-one.'),
+      Trap(answer - 1, '${fmt(answer - 1)} is one short: an off-by-one.'),
+      for (var d = 2; d <= 3; d++) ...[
+        Trap(answer + d, again),
+        Trap(answer - d, again),
+      ],
+    ];
+    final chosen = balancedOptions(
+      Trap(answer, ''),
+      traps.where((t) => t.value > 0),
+      fillers.where((t) => t.value > 0),
+      rng,
+      compare: (a, b) => a.value.compareTo(b.value),
+    );
+    final picked = [
+      for (final t in chosen)
+        if (t.value != answer) t,
+    ];
+    final options = [for (final t in chosen) t.value];
 
     return CountQuestion(
       level: level,

@@ -197,7 +197,7 @@ class MathGenerator {
     final d = _draft(kind, rng);
     // Near misses on both sides, so the answer can sit anywhere.
     final near = [
-      for (final k in const [1, 2, 9, 10, 11, 20]) ...[
+      for (final k in const [1, 2, 3, 4, 9, 10, 11, 20]) ...[
         d.answer + k,
         d.answer - k,
       ],
@@ -320,7 +320,8 @@ class MathGenerator {
   }
 
   _Draft _div(Random rng) {
-    final q = _in(rng, 2, 12), b = _in(rng, 2, 12);
+    // Quotients from 4, so three smaller wrong answers always exist.
+    final q = _in(rng, 4, 12), b = _in(rng, 2, 12);
     final a = q * b;
     return (
       kind: MathKind.div,

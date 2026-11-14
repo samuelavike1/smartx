@@ -165,4 +165,33 @@ void main() {
     }
     fail('no HH question offering 4');
   });
+
+  test('the right answer is not given away by its size', () {
+    double value(String s) {
+      final p = s.split('/');
+      return p.length == 2
+          ? int.parse(p[0]) / int.parse(p[1])
+          : double.parse(s);
+    }
+
+    for (var level = 1; level <= 10; level++) {
+      final at = List.filled(4, 0);
+      for (var seed = 0; seed < 300; seed++) {
+        final q = gen.generate(level: level, seed: seed);
+        if (q.kind == CoinKind.pick) continue;
+        final values = q.options.map(value).toList();
+        expect(values, orderedEquals([...values]..sort()));
+        at[q.answerIndex]++;
+      }
+      final total = at.fold(0, (a, b) => a + b);
+      if (total == 0) continue;
+      for (final c in at) {
+        expect(
+          c / total,
+          inInclusiveRange(0.15, 0.35),
+          reason: 'level $level: $at',
+        );
+      }
+    }
+  });
 }

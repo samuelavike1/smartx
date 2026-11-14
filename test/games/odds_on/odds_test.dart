@@ -197,10 +197,16 @@ void main() {
   });
 
   test('a wrong pick names the slip behind it', () {
-    final q = gen.generateKind(OddsKind.atLeastOneSix, seed: 1);
-    final adding = Frac(q.params['dice']!, 6);
-    expect(q.options, contains(adding));
-    expect(q.feedbackFor(adding), contains('counts rolls with two sixes'));
-    expect(q.feedbackFor(q.answer), q.insight);
+    // The answer's rank is random, so a slip on one side isn't offered
+    // every time; find a question that offers it.
+    for (var seed = 0; seed < 60; seed++) {
+      final q = gen.generateKind(OddsKind.atLeastOneSix, seed: seed);
+      final adding = Frac(q.params['dice']!, 6);
+      if (!q.options.contains(adding)) continue;
+      expect(q.feedbackFor(adding), contains('counts rolls with two sixes'));
+      expect(q.feedbackFor(q.answer), q.insight);
+      return;
+    }
+    fail('the adding slip never came up in 60 seeds');
   });
 }

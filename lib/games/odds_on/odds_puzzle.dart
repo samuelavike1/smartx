@@ -252,6 +252,13 @@ class OddsGenerator {
       Frac(answer.n, answer.d + 1),
       Frac(answer.n + 1, answer.d + 1),
       Frac(answer.n + 2, answer.d + 2),
+      // Smaller ones, so a small answer can still sit at the top.
+      Frac(answer.n, answer.d + 2),
+      answer * Frac(2, 3),
+      answer * Frac(1, 3),
+      answer * Frac(3, 4),
+      answer * Frac(3, 2),
+      answer * Frac(4, 3),
     ]..shuffle(rng);
     // Sorted, with the answer at a random position.
     final options = balancedOptions(

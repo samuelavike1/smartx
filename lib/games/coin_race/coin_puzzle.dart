@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/game/answer_options.dart';
 import '../odds_on/odds_math.dart';
 
 enum CoinKind {
@@ -48,6 +49,14 @@ Frac raceChance(String a, String b) {
 /// Penney's reply to a 3-flip pattern: switch its middle flip and put it in
 /// front of its first two.
 String penney(String f) => '${f[1] == 'H' ? 'T' : 'H'}${f.substring(0, 2)}';
+
+/// The number a label shows: '6', '3.75', '15/4' or '1/4'.
+double _value(String label) {
+  final parts = label.split('/');
+  return parts.length == 2
+      ? int.parse(parts[0]) / int.parse(parts[1])
+      : double.parse(label);
+}
 
 String flipText(Frac f) {
   if (f.d == 1) return '${f.n}';
@@ -154,12 +163,30 @@ class CoinGenerator {
   }
 
   /// Picks three traps that differ from the answer and each other, then
-  /// shuffles them in with it.
+  /// shuffles them in with it. Numbers ([byValue]) are shown smallest
+  /// first instead, with the answer at a random rank, so its size never
+  /// gives it away.
   (List<CoinTrap>, List<String>) _options(
     String answer,
     List<CoinTrap> candidates,
-    Random rng,
-  ) {
+    Random rng, {
+    bool byValue = false,
+  }) {
+    if (byValue) {
+      final chosen = balancedOptions(
+        CoinTrap(answer, ''),
+        candidates,
+        const <CoinTrap>[],
+        rng,
+        compare: (a, b) => _value(a.label).compareTo(_value(b.label)),
+      );
+      final traps = [
+        for (final t in chosen)
+          if (t.label != answer) t,
+      ];
+      assert(traps.length == 3, 'not enough traps for $answer');
+      return (traps, [for (final t in chosen) t.label]);
+    }
     final seen = {answer};
     final traps = <CoinTrap>[];
     for (final t in candidates) {
@@ -226,9 +253,31 @@ class CoinGenerator {
         'That adds an overlap $p doesn\'t have.',
       ),
       CoinTrap(flipText(ans + Frac(4)), 'Count the overlaps again.'),
+      CoinTrap(
+        flipText(ans + Frac(1)),
+        '${flipText(ans + Frac(1))} is one flip too many: count the flips up '
+        'to and including the one that completes $p.',
+      ),
+      CoinTrap(
+        flipText(ans * Frac(2)),
+        '${flipText(ans * Frac(2))} doubles the wait, as if each try needed '
+        'two runs.',
+      ),
+      // Mistakes that come out too small, so the answer isn't always among
+      // the smaller numbers.
+      CoinTrap(
+        flipText(ans / Frac(2)),
+        '${flipText(ans / Frac(2))} is half the wait: as if every flip '
+        'counted twice.',
+      ),
+      CoinTrap(
+        flipText(ans - Frac(1)),
+        '${flipText(ans - Frac(1))} is one flip short: the flip that '
+        'completes $p counts too.',
+      ),
     ];
     final answer = flipText(ans);
-    final (traps, options) = _options(answer, candidates, rng);
+    final (traps, options) = _options(answer, candidates, rng, byValue: true);
 
     final matches = [
       for (final (i, k) in ks.indexed)
@@ -341,13 +390,25 @@ class CoinGenerator {
         '${Frac(2, 3)}',
         'Score the overlaps both ways, then compare: see the working.',
       ),
-      CoinTrap(
-        '${Frac(1, 5)}',
-        'Score the overlaps both ways, then compare: see the working.',
-      ),
+      // Plain near misses on both sides, used when the named ones all sit
+      // on one side of the answer.
+      for (final f in [
+        Frac(1, 5),
+        Frac(1, 4),
+        Frac(2, 5),
+        Frac(3, 5),
+        Frac(3, 4),
+        Frac(4, 5),
+        Frac(1, 8),
+        Frac(7, 8),
+      ])
+        CoinTrap(
+          '$f',
+          'Score the overlaps both ways, then compare: see the working.',
+        ),
     ];
     final answer = '$ans';
-    final (traps, options) = _options(answer, candidates, rng);
+    final (traps, options) = _options(answer, candidates, rng, byValue: true);
     final aa = conway(a, a), ab = conway(a, b);
     final bb = conway(b, b), ba = conway(b, a);
     final key = [a, b]..sort();

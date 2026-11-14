@@ -132,15 +132,53 @@ void main() {
     expect(kindsSeen, CountKind.values.toSet());
   });
 
-  test('every trap value is the mistake it names', () {
-    // Spot checks against hand counts.
-    final q = gen.generate(level: 6, seed: 0);
-    expect(q.kind, CountKind.grid);
-    final w = q.params['w']!, h = q.params['h']!;
-    expect(
-      q.traps.map((t) => t.value),
-      everyElement(isIn([w * h, ipow(2, w + h), fact(w + h), w + h])),
-    );
+  test('grid traps are the mistakes they name', () {
+    // Spot checks against hand counts: the named grid mistakes, or the
+    // shared fallbacks (twice, half, off by one) when a side runs short.
+    for (var seed = 0; seed < 40; seed++) {
+      final q = gen.generate(level: 6, seed: seed);
+      expect(q.kind, CountKind.grid);
+      final w = q.params['w']!, h = q.params['h']!, a = q.answer;
+      expect(
+        q.traps.map((t) => t.value),
+        everyElement(
+          isIn([
+            w * h,
+            ipow(2, w + h),
+            fact(w + h),
+            w + h,
+            a * 2,
+            a ~/ 2,
+            a + 1,
+            a - 1,
+          ]),
+        ),
+      );
+    }
+  });
+
+  test('the right answer is not given away by its size', () {
+    // Each size rank (smallest … largest) gets 15–35% of right answers,
+    // overall and within every level.
+    for (var level = 0; level <= 10; level++) {
+      final at = List.filled(4, 0);
+      for (final l
+          in level == 0 ? [for (var i = 1; i <= 10; i++) i] : [level]) {
+        for (var seed = 0; seed < 300; seed++) {
+          final q = gen.generate(level: l, seed: seed);
+          expect(q.options, orderedEquals([...q.options]..sort()));
+          at[q.options.indexOf(q.answer)]++;
+        }
+      }
+      final total = at.fold(0, (a, b) => a + b);
+      for (final c in at) {
+        expect(
+          c / total,
+          inInclusiveRange(0.15, 0.35),
+          reason: 'level ${level == 0 ? 'all' : level}: $at',
+        );
+      }
+    }
   });
 
   test('the board\'s tiles: A A B B C', () {

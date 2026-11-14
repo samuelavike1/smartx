@@ -74,8 +74,8 @@ void main() {
   test('Mental Math: the right answer is spread over all four spots', () {
     const g = MathGenerator();
     final rng = Random(11);
-    final at = List.filled(4, 0);
     for (final kind in MathKind.values) {
+      final at = List.filled(4, 0);
       for (var i = 0; i < 400; i++) {
         final t = g.trial(kind, rng);
         expect(t.options, hasLength(4));
@@ -84,20 +84,20 @@ void main() {
         expect(t.options.every((o) => o > 0), isTrue);
         at[t.options.indexOf(t.answer)]++;
       }
+      expectSpread(at, 'Mental Math, ${kind.name}');
     }
-    expectSpread(at, 'Mental Math');
   });
 
   test('Odds On: the right answer is spread over all four spots', () {
     const g = OddsGenerator();
-    final at = List.filled(4, 0);
     for (var level = 1; level <= 10; level++) {
-      for (var seed = 0; seed < 200; seed++) {
+      final at = List.filled(4, 0);
+      for (var seed = 0; seed < 300; seed++) {
         final q = g.generate(level: level, seed: seed);
         expect(q.options, hasLength(4));
         at[q.answerIndex]++;
       }
+      expectSpread(at, 'Odds On, level $level');
     }
-    expectSpread(at, 'Odds On');
   });
 }
