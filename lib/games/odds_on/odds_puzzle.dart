@@ -9,13 +9,16 @@ import 'odds_math.dart';
 // from the classic slips, each with a sentence that names the slip.
 
 enum BallColour {
-  red('red', Color(0xFFD23F57)),
-  blue('blue', Color(0xFF2563EB)),
-  green('green', Color(0xFF2E8B3E));
+  red('red', Color(0xFFD23F57), Color(0xFFF0607A)),
+  blue('blue', Color(0xFF2563EB), Color(0xFF6C9BFF)),
+  green('green', Color(0xFF2E8B3E), Color(0xFF4CC26B));
 
-  const BallColour(this.word, this.color);
+  const BallColour(this.word, this.color, this.nightColor);
   final String word;
   final Color color;
+  final Color nightColor;
+
+  Color shade({required bool night}) => night ? nightColor : color;
 }
 
 /// What the picture above the question shows.

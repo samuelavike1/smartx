@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../density.dart';
 import '../lucid.dart';
+import '../palette.dart';
 
 class GlassNavItem {
   const GlassNavItem({required this.label, required this.icon});
@@ -37,9 +38,8 @@ class GlassNavBar extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final d = Dims.of(context);
     final dark = scheme.brightness == Brightness.dark;
-    final tint = (dark ? Lucid.nightSurface : Lucid.surface).withValues(
-      alpha: blur ? 0.7 : 0.96,
-    );
+    final tint = (dark ? Lucid.nightSurface : context.palette.surface)
+        .withValues(alpha: blur ? 0.7 : 0.96);
     final n = items.length;
 
     Widget bar = Container(

@@ -13,6 +13,7 @@ import 'pattern_sequence_controller.dart';
 import 'pattern_sequence_game.dart';
 import 'sequence_puzzle.dart';
 import 'widgets/token_tile.dart';
+import '../../ui/palette.dart';
 
 class PatternSequenceScreen extends ConsumerWidget {
   const PatternSequenceScreen({super.key});
@@ -110,10 +111,10 @@ class _RoundView extends ConsumerWidget {
                   token: state.answered ? puzzle.answer : null,
                   size: d.tile,
                   borderColor: state.answered && state.lastCorrect
-                      ? Lucid.correct
+                      ? context.palette.correct
                       : scheme.primary,
                   background: state.answered && state.lastCorrect
-                      ? Lucid.correctTint
+                      ? context.palette.correctTint
                       : null,
                 ),
               ),
@@ -200,11 +201,11 @@ class PatternOptionTile extends StatelessWidget {
             token: token,
             size: min(c.maxWidth, Dims.of(context).option),
             borderColor: showCorrect
-                ? Lucid.correct
-                : (showMiss ? Lucid.miss : null),
+                ? context.palette.correct
+                : (showMiss ? context.palette.miss : null),
             background: showCorrect
-                ? Lucid.correctTint
-                : (showMiss ? Lucid.missTint : null),
+                ? context.palette.correctTint
+                : (showMiss ? context.palette.missTint : null),
           ),
         ),
         if (showCorrect || showMiss)
@@ -249,13 +250,13 @@ class _Badge extends StatelessWidget {
       width: 24,
       height: 24,
       decoration: BoxDecoration(
-        color: correct ? Lucid.correct : Lucid.miss,
+        color: correct ? context.palette.correct : context.palette.miss,
         shape: BoxShape.circle,
       ),
       child: Icon(
         correct ? Icons.check_rounded : Icons.close_rounded,
         size: 16,
-        color: Colors.white,
+        color: correct ? context.palette.onCorrect : context.palette.onMiss,
         semanticLabel: correct ? 'Correct answer' : 'Your answer',
       ),
     );

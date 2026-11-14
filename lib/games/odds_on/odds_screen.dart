@@ -11,6 +11,7 @@ import 'odds_controller.dart';
 import 'odds_math.dart';
 import 'odds_on_game.dart';
 import 'odds_puzzle.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Odds On · question" and "Odds On · worked answer"
 // artboards.
@@ -198,9 +199,9 @@ class OddsSceneCard extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Lucid.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(round ? size : size * 0.22),
-        border: Border.all(color: Lucid.ink, width: 2),
+        border: Border.all(color: context.palette.ink, width: 2),
       ),
       child: Text(
         text,
@@ -208,14 +209,18 @@ class OddsSceneCard extends StatelessWidget {
           size: size * 0.42,
           weight: 700,
           display: true,
-          color: Lucid.ink,
+          color: context.palette.ink,
         ),
       ),
     );
 
     final Widget picture;
     if (s.test) {
-      picture = Icon(Icons.biotech_rounded, size: die, color: Lucid.ink);
+      picture = Icon(
+        Icons.biotech_rounded,
+        size: die,
+        color: context.palette.ink,
+      );
     } else if (s.balls.isNotEmpty) {
       picture = Wrap(
         alignment: WrapAlignment.center,
@@ -228,7 +233,7 @@ class OddsSceneCard extends StatelessWidget {
                 width: d.compact ? 22 : 26,
                 height: d.compact ? 22 : 26,
                 decoration: BoxDecoration(
-                  color: colour.color,
+                  color: colour.shade(night: context.palette.isNight),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -249,9 +254,9 @@ class OddsSceneCard extends StatelessWidget {
                   height: die * 1.1,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Lucid.surface,
+                    color: context.palette.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Lucid.ink, width: 2),
+                    border: Border.all(color: context.palette.ink, width: 2),
                   ),
                   child: i == 2
                       ? Text(
@@ -260,7 +265,7 @@ class OddsSceneCard extends StatelessWidget {
                             size: die * 0.32,
                             weight: 700,
                             display: true,
-                            color: Lucid.ink,
+                            color: context.palette.ink,
                           ),
                         )
                       : null,
@@ -333,10 +338,12 @@ class _Worked extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: d.compact ? 8 : 10),
           decoration: BoxDecoration(
-            color: right ? Lucid.correctTint : Lucid.missTint,
+            color: right
+                ? context.palette.correctTint
+                : context.palette.missTint,
             borderRadius: BorderRadius.circular(d.compact ? 16 : 18),
             border: Border.all(
-              color: right ? Lucid.correct : Lucid.miss,
+              color: right ? context.palette.correct : context.palette.miss,
               width: 2.5,
             ),
           ),
@@ -357,7 +364,9 @@ class _Worked extends StatelessWidget {
                 style: lucidText(
                   size: 12,
                   weight: 600,
-                  color: right ? Lucid.correctText : const Color(0xFFB3304A),
+                  color: right
+                      ? context.palette.correctText
+                      : context.palette.missText,
                 ),
               ),
             ],
@@ -414,8 +423,8 @@ class _Worked extends StatelessWidget {
                       width: 24,
                       height: 24,
                       alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Lucid.chip,
+                      decoration: BoxDecoration(
+                        color: context.palette.chip,
                         shape: BoxShape.circle,
                       ),
                       child: Text(

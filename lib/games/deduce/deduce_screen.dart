@@ -14,10 +14,10 @@ import '../pattern_sequence/widgets/token_tile.dart';
 import 'deduce_controller.dart';
 import 'deduce_game.dart';
 import 'deduce_puzzle.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Deduce · solve" and "Deduce · review" artboards.
 
-const _brokenText = Color(0xFFB4233C);
 const _ordinals = ['1st', '2nd', '3rd', '4th', '5th'];
 
 class DeduceScreen extends ConsumerWidget {
@@ -277,28 +277,28 @@ class _ClueRow extends StatelessWidget {
       true => Container(
         width: 22,
         height: 22,
-        decoration: const BoxDecoration(
-          color: Lucid.correctTint,
+        decoration: BoxDecoration(
+          color: context.palette.correctTint,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.check_rounded,
           size: 14,
-          color: Lucid.correct,
+          color: context.palette.correct,
           semanticLabel: 'Kept',
         ),
       ),
       false => Container(
         width: 22,
         height: 22,
-        decoration: const BoxDecoration(
-          color: Lucid.miss,
+        decoration: BoxDecoration(
+          color: context.palette.miss,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.close_rounded,
           size: 14,
-          color: Colors.white,
+          color: context.palette.onMiss,
           semanticLabel: 'Broken',
         ),
       ),
@@ -315,7 +315,9 @@ class _ClueRow extends StatelessWidget {
             style: lucidText(
               size: Dims.of(context).body,
               height: 1.35,
-              color: status == false ? _brokenText : scheme.onSurface,
+              color: status == false
+                  ? context.palette.missText
+                  : scheme.onSurface,
             ),
           ),
         ),
@@ -364,7 +366,7 @@ class _Spots extends StatelessWidget {
                                 size: tile,
                                 color: state.selected != null
                                     ? scheme.primary
-                                    : const Color(0xFFD9D6CC),
+                                    : context.palette.lineStrong,
                               )
                             : TokenTile(
                                 key: ValueKey(state.placed[i]),
@@ -412,10 +414,14 @@ class _ReviewRow extends StatelessWidget {
                 size: Dims.of(context).tray,
                 borderColor: marks == null
                     ? null
-                    : (marks![i] ? Lucid.correct : Lucid.miss),
+                    : (marks![i]
+                          ? context.palette.correct
+                          : context.palette.miss),
                 background: marks == null
                     ? null
-                    : (marks![i] ? Lucid.correctTint : Lucid.missTint),
+                    : (marks![i]
+                          ? context.palette.correctTint
+                          : context.palette.missTint),
               ),
             ),
           ),

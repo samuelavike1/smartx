@@ -19,6 +19,7 @@ import '../../ui/lucid.dart';
 import '../../ui/widgets/skill_marker.dart';
 import '../../ui/widgets/speed_widgets.dart';
 import 'feed_plan.dart';
+import '../../ui/palette.dart';
 
 // Cards of the Quick feed, built from the "Quick feed · card" and
 // "· card done" artboards. Speed cards use each game's own look (SpeedUi).
@@ -100,11 +101,11 @@ class FeedCardFrame extends StatelessWidget {
         color: scheme.surface,
         borderRadius: BorderRadius.circular(d.compact ? 24 : 28),
         border: Border.all(color: scheme.outlineVariant),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0F16161D),
+            color: context.palette.shadow,
             blurRadius: 24,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -139,9 +140,10 @@ class FeedCardFrame extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: switch (m) {
-                              true => Lucid.correct,
-                              false => Lucid.miss,
-                              null when i == dots.current => Lucid.ink,
+                              true => context.palette.correct,
+                              false => context.palette.miss,
+                              null when i == dots.current =>
+                                context.palette.ink,
                               null => scheme.outlineVariant,
                             },
                           ),
@@ -191,13 +193,15 @@ class FeedCardResultView extends StatelessWidget {
                 width: size,
                 height: size,
                 decoration: BoxDecoration(
-                  color: right ? Lucid.correct : Lucid.miss,
+                  color: right ? context.palette.correct : context.palette.miss,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   right ? Icons.check_rounded : Icons.close_rounded,
                   size: size * 0.54,
-                  color: Colors.white,
+                  color: right
+                      ? context.palette.onCorrect
+                      : context.palette.onMiss,
                 ),
               ),
               SizedBox(height: d.gapM),
@@ -230,7 +234,7 @@ class FeedCardResultView extends StatelessWidget {
                   height: 30,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Lucid.correctTint,
+                    color: context.palette.correctTint,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Center(
@@ -240,7 +244,7 @@ class FeedCardResultView extends StatelessWidget {
                       style: lucidText(
                         size: 13,
                         weight: 700,
-                        color: Lucid.correctText,
+                        color: context.palette.correctText,
                       ),
                     ),
                   ),
@@ -541,10 +545,10 @@ class _PatternFeedCardState extends State<PatternFeedCard> {
                           token: answered ? p.answer : null,
                           size: tile,
                           borderColor: answered && right
-                              ? Lucid.correct
+                              ? context.palette.correct
                               : scheme.primary,
                           background: answered && right
-                              ? Lucid.correctTint
+                              ? context.palette.correctTint
                               : null,
                         ),
                       ],

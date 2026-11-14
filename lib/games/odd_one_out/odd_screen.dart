@@ -9,6 +9,7 @@ import '../../ui/widgets/speed_widgets.dart';
 import 'odd_controller.dart';
 import 'odd_one_out_game.dart';
 import 'odd_puzzle.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Odd One Out · play" and "Odd One Out · review" artboards,
 // on the shared timed-trials screen. The grid is the answer: no dock
@@ -142,20 +143,28 @@ class OddGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox.square(
     dimension: size,
-    child: CustomPaint(painter: _GlyphPainter(tile)),
+    child: CustomPaint(
+      painter: _GlyphPainter(
+        tile,
+        tile.tint.shade(night: context.palette.isNight),
+      ),
+    ),
   );
 }
 
 class _GlyphPainter extends CustomPainter {
-  _GlyphPainter(this.tile);
+  _GlyphPainter(this.tile, this.color);
 
   final OddTile tile;
+
+  /// The tile's colour for the current light/dark mode.
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.shortestSide * tile.scale;
     final c = size.center(Offset.zero);
-    final paint = Paint()..color = tile.tint.color;
+    final paint = Paint()..color = color;
     switch (tile.shape) {
       case OddShape.circle:
         canvas.drawCircle(c, s / 2, paint);
@@ -182,7 +191,7 @@ class _GlyphPainter extends CustomPainter {
         canvas.drawPath(
           path,
           Paint()
-            ..color = tile.tint.color
+            ..color = color
             ..style = PaintingStyle.stroke
             ..strokeWidth = s * 0.08
             ..strokeJoin = StrokeJoin.round,
@@ -194,7 +203,7 @@ class _GlyphPainter extends CustomPainter {
   @override
   bool shouldRepaint(_GlyphPainter old) =>
       old.tile.shape != tile.shape ||
-      old.tile.tint != tile.tint ||
+      old.color != color ||
       old.tile.turn != tile.turn ||
       old.tile.scale != tile.scale;
 }
@@ -222,9 +231,9 @@ class _MissedGrid extends StatelessWidget {
 
     Widget cell(int i) {
       final (bg, edge, width) = i == trial.odd
-          ? (Lucid.correctTint, Lucid.correct, 2.0)
+          ? (context.palette.correctTint, context.palette.correct, 2.0)
           : i == tapped
-          ? (Lucid.missTint, Lucid.miss, 2.0)
+          ? (context.palette.missTint, context.palette.miss, 2.0)
           : (scheme.surface, scheme.outlineVariant, 1.0);
       return Container(
         width: tile,
@@ -306,7 +315,11 @@ class _MissedGrid extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  key(Lucid.correctTint, Lucid.correct, 'The odd one'),
+                  key(
+                    context.palette.correctTint,
+                    context.palette.correct,
+                    'The odd one',
+                  ),
                   const SizedBox(height: 6),
                   tapped == null
                       ? Text(
@@ -316,7 +329,11 @@ class _MissedGrid extends StatelessWidget {
                             color: scheme.onSurfaceVariant,
                           ),
                         )
-                      : key(Lucid.missTint, Lucid.miss, 'Your tap'),
+                      : key(
+                          context.palette.missTint,
+                          context.palette.miss,
+                          'Your tap',
+                        ),
                 ],
               ),
             ),

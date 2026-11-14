@@ -11,6 +11,7 @@ import '../../ui/widgets/press_scale.dart';
 import '../../ui/widgets/skill_marker.dart';
 import '../feed/feed_plan.dart';
 import 'daily_workout.dart';
+import '../../ui/palette.dart';
 
 // Values come from the "Today (home)" artboard (regular) and the
 // "Today · compact 360×640" artboard, via the density tokens in Dims.
@@ -38,11 +39,6 @@ const _months = [
   'November',
   'December',
 ];
-
-// Colours used on the ink workout card.
-const _cardLabel = Color(0xFFFFB27A);
-const _cardQuiet = Color(0xFFB9B8C2);
-const _cardRow = Color(0xFF26252E);
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -112,12 +108,15 @@ class _WorkoutCard extends StatelessWidget {
         ? 'Workout done · play again'
         : (done == 0 ? 'Start workout' : 'Continue workout');
     final target = next ?? items.first;
+    final p = context.palette;
 
     return Container(
       padding: EdgeInsets.all(d.cardPad),
+      // The hero card: ink by day, a raised card with a border at night.
       decoration: BoxDecoration(
-        color: Lucid.ink,
+        color: p.hero,
         borderRadius: BorderRadius.circular(d.compact ? 22 : Lucid.radiusL),
+        border: p.isNight ? Border.all(color: p.line) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,12 +128,12 @@ class _WorkoutCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'DAILY WORKOUT',
-                  style: lucidLabel(_cardLabel, size: d.label),
+                  style: lucidLabel(p.heroLabel, size: d.label),
                 ),
               ),
               Text(
                 '$done of ${items.length} · about ${items.length * minutesPerGame} min',
-                style: lucidText(size: d.small + 1, color: _cardQuiet),
+                style: lucidText(size: d.small + 1, color: p.heroQuiet),
               ),
             ],
           ),
@@ -152,7 +151,7 @@ class _WorkoutCard extends StatelessWidget {
               height: d.button,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Lucid.surface,
+                color: p.heroAccent,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
@@ -160,7 +159,7 @@ class _WorkoutCard extends StatelessWidget {
                 style: lucidText(
                   size: d.rowTitle,
                   weight: 700,
-                  color: Lucid.ink,
+                  color: p.onHeroAccent,
                 ),
               ),
             ),
@@ -183,19 +182,20 @@ class _WorkoutRow extends StatelessWidget {
     final skill = item.game.skills.first;
     final isNext = item.status == WorkoutStatus.next;
     final circle = d.rowCircle;
+    final p = context.palette;
 
     final Widget leading = switch (item.status) {
       WorkoutStatus.done => Container(
         width: circle,
         height: circle,
-        decoration: const BoxDecoration(
-          color: Lucid.spark,
+        decoration: BoxDecoration(
+          color: context.palette.spark,
           shape: BoxShape.circle,
         ),
         child: Icon(
           Icons.check_rounded,
           size: circle * 0.56,
-          color: Lucid.ink,
+          color: context.palette.onSpark,
           semanticLabel: 'Done',
         ),
       ),
@@ -215,7 +215,7 @@ class _WorkoutRow extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.6),
+            color: p.heroText.withValues(alpha: 0.6),
             width: 1.5,
           ),
         ),
@@ -234,7 +234,7 @@ class _WorkoutRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(d.rowPad),
       decoration: BoxDecoration(
-        color: isNext ? Lucid.surface : _cardRow,
+        color: isNext ? p.heroAccent : p.heroRow,
         borderRadius: BorderRadius.circular(d.compact ? 14 : Lucid.radiusM),
       ),
       child: Row(
@@ -250,14 +250,15 @@ class _WorkoutRow extends StatelessWidget {
                   style: lucidText(
                     size: d.rowTitle,
                     weight: 600,
-                    color: isNext ? Lucid.ink : Lucid.surface,
+                    color: isNext ? p.onHeroAccent : p.heroText,
                   ),
                 ),
                 Text(
                   subtitle,
                   style: lucidText(
                     size: d.small,
-                    color: isNext ? Lucid.muted : _cardQuiet,
+                    // The up-next row stays light at night: day muted.
+                    color: isNext ? LucidPalette.light.muted : p.heroQuiet,
                   ),
                 ),
               ],
@@ -296,13 +297,13 @@ class _FeedRow extends StatelessWidget {
               width: icon,
               height: icon,
               decoration: BoxDecoration(
-                color: Lucid.sparkTint,
+                color: context.palette.sparkTint,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 Icons.bolt_rounded,
                 size: icon * 0.55,
-                color: const Color(0xFFB4501A),
+                color: context.palette.sparkStrong,
               ),
             ),
             SizedBox(width: d.compact ? 12 : 14),
@@ -473,7 +474,7 @@ class _FreePlayGrid extends StatelessWidget {
                     style: lucidText(
                       size: d.small + 1,
                       weight: 600,
-                      color: Lucid.surface,
+                      color: onFill(g.skills.first.color),
                     ),
                   ),
                 ),

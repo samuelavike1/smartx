@@ -28,8 +28,8 @@ abstract final class Lucid {
   // Dark
   static const nightGround = Color(0xFF14131B);
   static const nightSurface = Color(0xFF1E1C29);
-  static const nightRaised = Color(0xFF26242F);
-  static const nightLine = Color(0xFF2E2B3B);
+  static const nightRaised = Color(0xFF2A2836);
+  static const nightLine = Color(0xFF34313F);
   static const nightText = Color(0xFFF3F2F7);
   static const nightMuted = Color(0xFFB4B1C4);
 
@@ -44,6 +44,12 @@ abstract final class Lucid {
   static const shake = Duration(milliseconds: 360);
   static const slide = Duration(milliseconds: 260);
 }
+
+/// Text or icon colour for a solid [fill] (a skill-coloured tile): white on
+/// dark fills, ink on light ones such as the Focus yellow, so it always
+/// reads, in both light and dark mode.
+Color onFill(Color fill) =>
+    fill.computeLuminance() > 0.3 ? Lucid.ink : const Color(0xFFFFFFFF);
 
 /// Text in Lucid's two families. Both fonts are variable, so the weight is
 /// sent as a `wght` variation as well as a [FontWeight].

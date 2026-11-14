@@ -7,15 +7,20 @@ import '../../core/game/speed_game.dart';
 /// The four inks. Chosen to differ as much as possible; every button also
 /// shows the name, so colour is never the only cue on the controls.
 enum InkColour {
-  blue('Blue', Color(0xFF1E5FD6)),
-  orange('Orange', Color(0xFFE06C00)),
-  green('Green', Color(0xFF2E8B3E)),
-  pink('Pink', Color(0xFFD0338A));
+  blue('Blue', Color(0xFF1E5FD6), Color(0xFF6C9BFF)),
+  orange('Orange', Color(0xFFE06C00), Color(0xFFF59E4C)),
+  green('Green', Color(0xFF2E8B3E), Color(0xFF4CC26B)),
+  pink('Pink', Color(0xFFD0338A), Color(0xFFF06BB0));
 
-  const InkColour(this.label, this.color);
+  const InkColour(this.label, this.color, this.nightColor);
 
   final String label;
   final Color color;
+
+  /// Brighter, so the word still reads on a dark ground.
+  final Color nightColor;
+
+  Color shade({required bool night}) => night ? nightColor : color;
 
   String get word => label.toUpperCase();
 }

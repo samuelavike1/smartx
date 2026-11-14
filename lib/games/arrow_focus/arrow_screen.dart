@@ -9,6 +9,7 @@ import '../../ui/widgets/speed_widgets.dart';
 import 'arrow_controller.dart';
 import 'arrow_focus_game.dart';
 import 'arrow_puzzle.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Arrow Focus · play" and "Arrow Focus · review" artboards,
 // on the shared timed-trials screen.
@@ -100,7 +101,7 @@ class _ArrowRow extends StatelessWidget {
                 children: [
                   for (final (i, dir) in t.arrows.indexed) ...[
                     if (i > 0) const SizedBox(width: gap),
-                    Icon(dir.icon, size: size, color: Lucid.ink),
+                    Icon(dir.icon, size: size, color: context.palette.ink),
                   ],
                 ],
               ),

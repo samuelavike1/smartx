@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../ui/density.dart';
 import '../../ui/lucid.dart';
+import '../../ui/palette.dart';
 import '../../ui/widgets/speed_widgets.dart';
 import 'ink_clash_game.dart';
 import 'ink_controller.dart';
@@ -46,7 +47,7 @@ final inkUi = SpeedUi<InkBlock, InkTrial, InkColour>(
           size: size,
           weight: 700,
           display: true,
-          color: t.ink.color,
+          color: t.ink.shade(night: context.palette.isNight),
           letterSpacing: size * 0.02,
         ),
       ),
@@ -100,7 +101,7 @@ class _ColourLabel extends StatelessWidget {
           width: 18,
           height: 18,
           decoration: BoxDecoration(
-            color: colour.color,
+            color: colour.shade(night: context.palette.isNight),
             shape: BoxShape.circle,
           ),
         ),

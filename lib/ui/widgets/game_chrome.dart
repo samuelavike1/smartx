@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../density.dart';
 import '../lucid.dart';
 import 'press_scale.dart';
+import '../palette.dart';
 
 // Shared pieces of every game screen, taken from the "In game" and
 // "Results" artboards on the design canvas. New games compose these so they
@@ -177,8 +178,8 @@ class LevelComboRow extends StatelessWidget {
               ? GamePill(
                   key: ValueKey('combo-$combo'),
                   text: '×$combo combo',
-                  background: Lucid.spark,
-                  foreground: Lucid.ink,
+                  background: context.palette.spark,
+                  foreground: context.palette.onSpark,
                 )
               : SizedBox(height: Dims.of(context).pill),
         ),
@@ -261,8 +262,9 @@ class _FeedbackCardState extends State<FeedbackCard> {
     final theme = Theme.of(context);
     final correct = widget.correct;
     final points = widget.points;
-    final color = correct ? Lucid.correct : Lucid.miss;
-    final textColor = correct ? Lucid.correctText : const Color(0xFFB4233C);
+    final p = context.palette;
+    final color = correct ? p.correct : p.miss;
+    final textColor = correct ? p.correctText : p.missText;
     final d = Dims.of(context);
     final headline = d.compact ? 18.0 : 20.0;
 
@@ -274,7 +276,7 @@ class _FeedbackCardState extends State<FeedbackCard> {
         border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: p.shadow,
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -292,7 +294,7 @@ class _FeedbackCardState extends State<FeedbackCard> {
                 child: Icon(
                   correct ? Icons.check_rounded : Icons.close_rounded,
                   size: d.compact ? 18 : 20,
-                  color: Colors.white,
+                  color: correct ? p.onCorrect : p.onMiss,
                 ),
               ),
               const SizedBox(width: 10),

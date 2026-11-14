@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'lucid.dart';
+import 'palette.dart';
 
 /// Hand-built theme: no `ColorScheme.fromSeed`, so Material's tonal tints
 /// (lavender containers, tinted surfaces) never appear. The goal is a look
@@ -18,6 +19,7 @@ ThemeData buildTheme(Brightness brightness, {bool compact = false}) {
   final muted = dark ? Lucid.nightMuted : Lucid.muted;
   final line = dark ? Lucid.nightLine : Lucid.line;
   final raised = dark ? Lucid.nightRaised : Lucid.chip;
+  final p = dark ? LucidPalette.night : LucidPalette.light;
 
   final scheme = ColorScheme(
     brightness: brightness,
@@ -26,14 +28,14 @@ ThemeData buildTheme(Brightness brightness, {bool compact = false}) {
     onPrimary: dark ? Lucid.ink : Lucid.surface,
     primaryContainer: raised,
     onPrimaryContainer: text,
-    secondary: Lucid.spark,
-    onSecondary: Lucid.ink,
-    secondaryContainer: Lucid.sparkTint,
-    onSecondaryContainer: Lucid.sparkText,
-    tertiary: Lucid.correct,
-    onTertiary: Lucid.surface,
-    error: Lucid.miss,
-    onError: Lucid.surface,
+    secondary: p.spark,
+    onSecondary: p.onSpark,
+    secondaryContainer: p.sparkTint,
+    onSecondaryContainer: p.sparkText,
+    tertiary: p.correct,
+    onTertiary: p.onCorrect,
+    error: p.miss,
+    onError: p.onMiss,
     surface: surface,
     onSurface: text,
     onSurfaceVariant: muted,
@@ -95,6 +97,7 @@ ThemeData buildTheme(Brightness brightness, {bool compact = false}) {
   return ThemeData(
     useMaterial3: true,
     brightness: brightness,
+    extensions: [dark ? LucidPalette.night : LucidPalette.light],
     colorScheme: scheme,
     scaffoldBackgroundColor: ground,
     canvasColor: ground,

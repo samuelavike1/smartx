@@ -13,11 +13,15 @@ import '../../ui/widgets/session_results.dart';
 import 'echo_back_game.dart';
 import 'echo_controller.dart';
 import 'echo_puzzle.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Echo Back · play" and "Echo Back · review" artboards.
 
 final _lit = Skill.memory.color;
-const _missInk = Color(0xFF5B21B6);
+
+/// Text for a missed step: deep violet by day, light violet at night.
+Color _missInk(LucidPalette p) =>
+    p.isNight ? const Color(0xFFC4B5FD) : const Color(0xFF5B21B6);
 
 class EchoScreen extends ConsumerWidget {
   const EchoScreen({super.key});
@@ -280,10 +284,11 @@ class _MatchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = Dims.of(context);
-    final bg = switch (flash) {
-      true => Lucid.correct,
-      false => Lucid.miss,
-      null => Lucid.ink,
+    final p = context.palette;
+    final (bg, fg) = switch (flash) {
+      true => (p.correct, p.onCorrect),
+      false => (p.miss, p.onMiss),
+      null => (p.ink, p.onInk),
     };
     return PressScale(
       semanticLabel: label,
@@ -298,11 +303,7 @@ class _MatchButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: lucidText(
-            size: d.compact ? 16 : 18,
-            weight: 700,
-            color: Colors.white,
-          ),
+          style: lucidText(size: d.compact ? 16 : 18, weight: 700, color: fg),
         ),
       ),
     );
@@ -331,7 +332,7 @@ class _Timeline extends StatelessWidget {
             runSpacing: gap,
             children: [
               for (final (i, o) in result.outcomes.indexed)
-                _chip(i, o, chip, h, scheme),
+                _chip(i, o, chip, h, scheme, context.palette),
             ],
           ),
         );
@@ -339,7 +340,14 @@ class _Timeline extends StatelessWidget {
     );
   }
 
-  Widget _chip(int i, StepOutcome o, double w, double h, ColorScheme scheme) {
+  Widget _chip(
+    int i,
+    StepOutcome o,
+    double w,
+    double h,
+    ColorScheme scheme,
+    LucidPalette p,
+  ) {
     final number = Text(
       '${i + 1}',
       style: lucidText(size: 12, color: scheme.onSurfaceVariant),
@@ -347,11 +355,8 @@ class _Timeline extends StatelessWidget {
     final (bg, border, child, label) = switch (o) {
       StepOutcome.warmup => (
         Colors.transparent,
-        Border.all(color: const Color(0xFFD9D6CC)),
-        Text(
-          '${i + 1}',
-          style: lucidText(size: 12, color: const Color(0xFFA3A1AD)),
-        ),
+        Border.all(color: p.lineStrong),
+        Text('${i + 1}', style: lucidText(size: 12, color: p.faint)),
         'warm-up',
       ),
       StepOutcome.quiet => (
@@ -361,9 +366,9 @@ class _Timeline extends StatelessWidget {
         'no match',
       ),
       StepOutcome.hit => (
-        Lucid.correctTint,
-        Border.all(color: Lucid.correct, width: 2),
-        const Icon(Icons.check_rounded, size: 16, color: Lucid.correct),
+        p.correctTint,
+        Border.all(color: p.correct, width: 2),
+        Icon(Icons.check_rounded, size: 16, color: p.correct),
         'caught',
       ),
       StepOutcome.miss => (
@@ -371,14 +376,14 @@ class _Timeline extends StatelessWidget {
         Border.all(color: _lit, width: 2.5),
         Text(
           '${i + 1}',
-          style: lucidText(size: 12, weight: 700, color: _missInk),
+          style: lucidText(size: 12, weight: 700, color: _missInk(p)),
         ),
         'missed',
       ),
       StepOutcome.falseTap => (
-        Lucid.missTint,
-        Border.all(color: Lucid.miss, width: 2),
-        const Icon(Icons.close_rounded, size: 14, color: Lucid.miss),
+        p.missTint,
+        Border.all(color: p.miss, width: 2),
+        Icon(Icons.close_rounded, size: 14, color: p.miss),
         'false tap',
       ),
     };
@@ -432,10 +437,10 @@ class _Legend extends StatelessWidget {
       runSpacing: 6,
       alignment: WrapAlignment.center,
       children: [
-        item(Lucid.correctTint, Lucid.correct, 2, 'Caught'),
+        item(context.palette.correctTint, context.palette.correct, 2, 'Caught'),
         item(null, _lit, 2.5, 'Missed'),
-        item(Lucid.missTint, Lucid.miss, 2, 'False tap'),
-        item(null, const Color(0xFFD9D6CC), 1, 'Warm-up'),
+        item(context.palette.missTint, context.palette.miss, 2, 'False tap'),
+        item(null, context.palette.lineStrong, 1, 'Warm-up'),
       ],
     );
   }

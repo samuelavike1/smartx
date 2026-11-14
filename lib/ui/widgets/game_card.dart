@@ -35,7 +35,7 @@ class GameCard extends StatelessWidget {
                   color: main.color,
                   borderRadius: BorderRadius.circular(Lucid.radiusM),
                 ),
-                child: Icon(game.icon, color: Colors.white),
+                child: Icon(game.icon, color: onFill(main.color)),
               ),
               const SizedBox(width: 14),
               Expanded(

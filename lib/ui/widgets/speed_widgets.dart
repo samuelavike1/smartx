@@ -11,6 +11,7 @@ import '../lucid.dart';
 import 'game_chrome.dart';
 import 'press_scale.dart';
 import 'session_results.dart';
+import '../palette.dart';
 
 // Screens for the timed-trials games. A game supplies the stimulus, its
 // answer buttons and its wording; layout, timer, flash and review are shared
@@ -392,9 +393,11 @@ class SpeedCuePill extends StatelessWidget {
       height: d.compact ? 32 : 36,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: filled ? Lucid.ink : Lucid.surface,
+        color: filled ? context.palette.ink : context.palette.surface,
         borderRadius: BorderRadius.circular(999),
-        border: filled ? null : Border.all(color: Lucid.ink, width: 2),
+        border: filled
+            ? null
+            : Border.all(color: context.palette.ink, width: 2),
       ),
       child: Center(
         widthFactor: 1,
@@ -403,7 +406,7 @@ class SpeedCuePill extends StatelessWidget {
           style: lucidText(
             size: d.compact ? 13 : 14,
             weight: 700,
-            color: filled ? Colors.white : Lucid.ink,
+            color: filled ? context.palette.onInk : context.palette.ink,
             letterSpacing: 0.9,
           ),
         ),
@@ -475,9 +478,13 @@ class SpeedButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final d = Dims.of(context);
     final (bg, edge, width) = switch (mark) {
-      SpeedMark.right => (Lucid.correctTint, Lucid.correct, 2.5),
-      SpeedMark.wrong => (Lucid.missTint, Lucid.miss, 2.5),
-      SpeedMark.answer => (scheme.surface, Lucid.correct, 2.5),
+      SpeedMark.right => (
+        context.palette.correctTint,
+        context.palette.correct,
+        2.5,
+      ),
+      SpeedMark.wrong => (context.palette.missTint, context.palette.miss, 2.5),
+      SpeedMark.answer => (scheme.surface, context.palette.correct, 2.5),
       SpeedMark.none => (scheme.surface, scheme.outlineVariant, 1.5),
     };
     return PressScale(
@@ -521,6 +528,9 @@ class SpeedReview extends StatelessWidget {
 
   /// Colour of the conflict bar (the Ink Clash orange, in every game).
   static const conflictColor = Color(0xFFE06C00);
+
+  /// [conflictColor] brightened for a dark ground.
+  static const conflictNight = Color(0xFFF59E4C);
 
   @override
   Widget build(BuildContext context) {
@@ -629,7 +639,11 @@ class SpeedReview extends StatelessWidget {
               SizedBox(height: d.gapS),
               bar(text.calm, r.calmAvg, scheme.primary),
               SizedBox(height: d.gapS),
-              bar(text.conflict, r.conflictAvg, conflictColor),
+              bar(
+                text.conflict,
+                r.conflictAvg,
+                context.palette.isNight ? conflictNight : conflictColor,
+              ),
               if (cost != null) ...[
                 SizedBox(height: d.gapS),
                 Text(
@@ -658,10 +672,14 @@ class SpeedReview extends StatelessWidget {
                   child: Container(
                     height: d.compact ? 22 : 26,
                     decoration: BoxDecoration(
-                      color: ok ? Lucid.correctTint : Lucid.missTint,
+                      color: ok
+                          ? context.palette.correctTint
+                          : context.palette.missTint,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: ok ? Lucid.correct : Lucid.miss,
+                        color: ok
+                            ? context.palette.correct
+                            : context.palette.miss,
                         width: 1.5,
                       ),
                     ),

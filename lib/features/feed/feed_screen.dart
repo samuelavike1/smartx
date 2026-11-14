@@ -10,6 +10,7 @@ import '../../ui/widgets/skill_marker.dart';
 import 'feed_cards.dart';
 import 'feed_controller.dart';
 import 'feed_plan.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Quick feed · card", "· card done" and "· summary"
 // artboards. No autoplay: the player moves on with a swipe up (or a tap on
@@ -177,7 +178,7 @@ class _Header extends StatelessWidget {
                     builder: (_, v, _) => LinearProgressIndicator(
                       value: v,
                       minHeight: 6,
-                      color: Lucid.spark,
+                      color: context.palette.spark,
                       backgroundColor: scheme.outlineVariant,
                     ),
                   ),
@@ -190,8 +191,8 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 12),
           GamePill(
             text: '×${s.combo}',
-            background: Lucid.spark,
-            foreground: Lucid.ink,
+            background: context.palette.spark,
+            foreground: context.palette.onSpark,
           ),
         ],
       ],
@@ -227,17 +228,17 @@ class _NextBar extends StatelessWidget {
       padding: EdgeInsets.only(bottom: bottom),
       height: (d.compact ? 46 : 52) + bottom,
       decoration: BoxDecoration(
-        color: ready ? Lucid.ink : Lucid.chip,
+        color: ready ? context.palette.ink : context.palette.chip,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (ready) ...[
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_up_rounded,
               size: 20,
-              color: Colors.white,
+              color: context.palette.onInk,
             ),
             const SizedBox(width: 6),
           ],
@@ -246,7 +247,7 @@ class _NextBar extends StatelessWidget {
             style: lucidText(
               size: d.small + 1,
               weight: ready ? 600 : 500,
-              color: ready ? Colors.white : const Color(0xFF8A8996),
+              color: ready ? context.palette.onInk : context.palette.faint,
             ),
           ),
         ],
@@ -323,7 +324,10 @@ class _Summary extends StatelessWidget {
                   Text(
                     'QUICK FEED DONE',
                     textAlign: TextAlign.center,
-                    style: lucidLabel(const Color(0xFFB4501A), size: d.label),
+                    style: lucidLabel(
+                      context.palette.sparkStrong,
+                      size: d.label,
+                    ),
                   ),
                   SizedBox(height: d.gapS),
                   Semantics(
@@ -454,8 +458,8 @@ class _SkillLine extends StatelessWidget {
     final (changeText, changeColor) = switch (change) {
       null => ('first feed', scheme.onSurfaceVariant),
       0 => ('same as last feed', scheme.onSurfaceVariant),
-      > 0 => ('▲ $change vs last feed', Lucid.correctText),
-      _ => ('▼ ${-change} vs last feed', const Color(0xFFB3304A)),
+      > 0 => ('▲ $change vs last feed', context.palette.correctText),
+      _ => ('▼ ${-change} vs last feed', context.palette.missText),
     };
     return Semantics(
       label:

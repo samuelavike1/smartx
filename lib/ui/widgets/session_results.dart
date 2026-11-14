@@ -10,10 +10,9 @@ import '../density.dart';
 import '../lucid.dart';
 import 'game_chrome.dart';
 import 'press_scale.dart';
+import '../palette.dart';
 
 // Built from the "Results · level up" artboard on the design canvas.
-
-const _bannerQuiet = Color(0xFFB9B8C2);
 
 /// End of a session: score, level change, skill XP, the last miss, and the
 /// way on (next workout game, or play again).
@@ -225,6 +224,7 @@ class _LevelBanner extends StatelessWidget {
             Icons.horizontal_rule_rounded,
           );
 
+    final p = context.palette;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.92, end: 1),
       duration: Lucid.pop,
@@ -233,9 +233,11 @@ class _LevelBanner extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(d.compact ? 12 : 16),
         decoration: BoxDecoration(
-          color: up ? Lucid.ink : scheme.surface,
+          color: up ? p.hero : scheme.surface,
           borderRadius: BorderRadius.circular(d.compact ? 18 : 20),
-          border: up ? null : Border.all(color: scheme.outlineVariant),
+          border: up && !p.isNight
+              ? null
+              : Border.all(color: scheme.outlineVariant),
         ),
         child: Row(
           children: [
@@ -244,11 +246,11 @@ class _LevelBanner extends StatelessWidget {
               height: d.compact ? 40 : 48,
               decoration: BoxDecoration(
                 color: up
-                    ? Colors.white.withValues(alpha: 0.16)
+                    ? p.heroText.withValues(alpha: 0.16)
                     : scheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: up ? Colors.white : scheme.onSurface),
+              child: Icon(icon, color: up ? p.heroText : scheme.onSurface),
             ),
             SizedBox(width: d.compact ? 12 : 14),
             Expanded(
@@ -261,7 +263,7 @@ class _LevelBanner extends StatelessWidget {
                       size: d.compact ? 17 : 20,
                       weight: 700,
                       display: true,
-                      color: up ? Colors.white : scheme.onSurface,
+                      color: up ? p.heroText : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -269,7 +271,7 @@ class _LevelBanner extends StatelessWidget {
                     sub,
                     style: lucidText(
                       size: d.small + 1,
-                      color: up ? _bannerQuiet : scheme.onSurfaceVariant,
+                      color: up ? p.heroQuiet : scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -365,12 +367,12 @@ class _NearMissCard extends StatelessWidget {
       children: [
         Text(
           'Round ${miss.round} slipped by',
-          style: lucidText(size: 15, weight: 600, color: Lucid.ink),
+          style: lucidText(size: 15, weight: 600, color: context.palette.ink),
         ),
         const SizedBox(height: 2),
         Text(
           '${miss.reason} Try one like it?',
-          style: lucidText(size: 13, color: Lucid.sparkText),
+          style: lucidText(size: 13, color: context.palette.sparkText),
         ),
       ],
     );
@@ -383,12 +385,12 @@ class _NearMissCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Lucid.surface,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
           'Try a similar one',
-          style: lucidText(size: 14, weight: 600, color: Lucid.ink),
+          style: lucidText(size: 14, weight: 600, color: context.palette.ink),
         ),
       ),
     );
@@ -396,7 +398,7 @@ class _NearMissCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: Lucid.sparkTint,
+        color: context.palette.sparkTint,
         borderRadius: BorderRadius.circular(20),
       ),
       // Side by side as on the artboard (390 wide); stacked on narrower

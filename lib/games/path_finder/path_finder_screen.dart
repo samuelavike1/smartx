@@ -14,14 +14,28 @@ import '../../ui/widgets/session_results.dart';
 import 'path_controller.dart';
 import 'path_finder_game.dart';
 import 'path_puzzle.dart';
+import '../../ui/palette.dart';
 
 // Built from the "Path Finder · play" and "Path Finder · review" artboards.
 
-const _wall = Color(0xFF2E2D38);
-const _exitTint = Color(0xFFFBEAF3);
-const _gateTint = Color(0xFFFFF7E0);
-const _gateEdge = Color(0xFFD9A200);
-const _keyInk = Color(0xFF9A6B00);
+/// Board colours by day and night. At night walls turn lighter than the
+/// board (dark walls would vanish on a dark ground) and the tints darken.
+({Color wall, Color exitTint, Color gateTint, Color gateEdge, Color keyInk})
+_board(bool night) => night
+    ? (
+        wall: const Color(0xFF6B6880),
+        exitTint: const Color(0xFF3E2034),
+        gateTint: const Color(0xFF3A3013),
+        gateEdge: const Color(0xFFE8B92E),
+        keyInk: const Color(0xFFF2C14E),
+      )
+    : (
+        wall: const Color(0xFF2E2D38),
+        exitTint: const Color(0xFFFBEAF3),
+        gateTint: const Color(0xFFFFF7E0),
+        gateEdge: const Color(0xFFD9A200),
+        keyInk: const Color(0xFF9A6B00),
+      );
 final _piece = Skill.problemSolving.color;
 
 class PathFinderScreen extends ConsumerWidget {
@@ -194,7 +208,7 @@ class _RoundView extends ConsumerWidget {
                             DashedOutline(
                               size: d.control,
                               radius: d.compact ? 14 : 16,
-                              color: const Color(0xFFD9D6CC),
+                              color: context.palette.lineStrong,
                               strokeWidth: 1.5,
                             ),
                             Icon(
@@ -425,15 +439,16 @@ class _CellView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = size * 0.5;
-    var bg = Lucid.surface;
+    final b = _board(context.palette.isNight);
+    var bg = context.palette.surface;
     Border? border;
     Widget? content;
 
     switch (cell) {
       case Cell.wall:
-        bg = _wall;
+        bg = b.wall;
       case Cell.exit:
-        bg = _exitTint;
+        bg = b.exitTint;
         border = Border.all(color: _piece, width: 2);
         content = Icon(
           Icons.flag_outlined,
@@ -446,7 +461,7 @@ class _CellView extends StatelessWidget {
           content = Icon(
             Icons.key_rounded,
             size: icon,
-            color: _keyInk,
+            color: b.keyInk,
             semanticLabel: 'Key',
           );
         }
@@ -455,21 +470,21 @@ class _CellView extends StatelessWidget {
           content = Icon(
             Icons.lock_open_rounded,
             size: icon * 0.85,
-            color: _gateEdge.withValues(alpha: 0.6),
+            color: b.gateEdge.withValues(alpha: 0.6),
             semanticLabel: 'Open gate',
           );
         } else {
-          bg = _gateTint;
-          border = Border.all(color: _gateEdge, width: 2);
+          bg = b.gateTint;
+          border = Border.all(color: b.gateEdge, width: 2);
           content = Icon(
             Icons.lock_rounded,
             size: icon * 0.85,
-            color: _keyInk,
+            color: b.keyInk,
             semanticLabel: 'Locked gate',
           );
         }
       case Cell.arrowUp || Cell.arrowDown || Cell.arrowLeft || Cell.arrowRight:
-        bg = Lucid.chip;
+        bg = context.palette.chip;
         content = Icon(
           switch (cell.arrow!) {
             Dir.up => Icons.arrow_upward_rounded,
@@ -478,7 +493,7 @@ class _CellView extends StatelessWidget {
             Dir.right => Icons.arrow_forward_rounded,
           },
           size: icon,
-          color: Lucid.ink,
+          color: context.palette.ink,
           semanticLabel: 'Arrow ${cell.arrow!.word}',
         );
       case Cell.floor:

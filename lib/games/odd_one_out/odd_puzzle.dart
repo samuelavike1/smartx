@@ -17,13 +17,19 @@ enum OddShape {
 /// the odd one, and differs from both in brightness as well as hue, so it
 /// stands out for colour-blind players too.
 enum OddTint {
-  ink('black', Color(0xFF16161D)),
-  blue('blue', Color(0xFF2563EB)),
-  orange('orange', Color(0xFFE06C00));
+  ink('black', Color(0xFF16161D), Color(0xFFF3F2F7)),
+  blue('blue', Color(0xFF2563EB), Color(0xFF5B8DEF)),
+  orange('orange', Color(0xFFE06C00), Color(0xFFF5A04A));
 
-  const OddTint(this.word, this.color);
+  const OddTint(this.word, this.color, this.nightColor);
   final String word;
   final Color color;
+
+  /// At night the black tiles turn near-white and the others brighten,
+  /// keeping the same brightness order (so it still works colour-blind).
+  final Color nightColor;
+
+  Color shade({required bool night}) => night ? nightColor : color;
 }
 
 /// The one way the odd tile differs from the rest.

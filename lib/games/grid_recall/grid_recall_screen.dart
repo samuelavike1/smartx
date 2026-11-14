@@ -11,6 +11,7 @@ import '../../ui/widgets/game_chrome.dart';
 import '../../ui/widgets/session_results.dart';
 import 'grid_recall_controller.dart';
 import 'grid_recall_game.dart';
+import '../../ui/palette.dart';
 
 /// Lit cells use the Memory skill colour: this is the memory game.
 final _lit = Skill.memory.color;
@@ -224,13 +225,13 @@ class _Cell extends StatelessWidget {
         final orderedRight = p.ordered && tapped && p.cells[tapOrder] == index;
         final right = p.ordered ? orderedRight : (tapped && isTarget);
         if (tapped && right) {
-          fill = Lucid.correctTint;
-          border = Lucid.correct;
+          fill = context.palette.correctTint;
+          border = context.palette.correct;
           borderWidth = 2.5;
           semantics += ', correct';
         } else if (tapped) {
-          fill = Lucid.missTint;
-          border = Lucid.miss;
+          fill = context.palette.missTint;
+          border = context.palette.miss;
           borderWidth = 2.5;
           semantics += ', wrong';
         } else if (isTarget) {
