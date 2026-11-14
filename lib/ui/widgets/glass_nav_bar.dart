@@ -17,15 +17,16 @@ class GlassNavItem {
 /// Floating, frosted pill tab bar. The selected tab sits in a soft tinted
 /// pill (not a solid fill) that slides between tabs.
 ///
-/// Blur is the expensive part; [blur] can be turned off on low-end devices,
-/// in which case the bar falls back to a near-solid surface.
+/// The frosted blur is off by default: blurring what's behind the bar is
+/// redone every frame, and on mid-range phone GPUs it made launch, resume
+/// and scrolling slow. Without it the bar is a near-solid surface.
 class GlassNavBar extends StatelessWidget {
   const GlassNavBar({
     super.key,
     required this.items,
     required this.currentIndex,
     required this.onTap,
-    this.blur = true,
+    this.blur = false,
   });
 
   final List<GlassNavItem> items;
@@ -39,7 +40,7 @@ class GlassNavBar extends StatelessWidget {
     final d = Dims.of(context);
     final dark = scheme.brightness == Brightness.dark;
     final tint = (dark ? Lucid.nightSurface : context.palette.surface)
-        .withValues(alpha: blur ? 0.7 : 0.96);
+        .withValues(alpha: blur ? 0.7 : 1);
     final n = items.length;
 
     Widget bar = Container(
@@ -101,6 +102,9 @@ class GlassNavBar extends StatelessWidget {
         ),
       );
     }
+
+    // Its own layer, so scrolling content doesn't repaint the bar.
+    bar = RepaintBoundary(child: bar);
 
     return SafeArea(
       top: false,
