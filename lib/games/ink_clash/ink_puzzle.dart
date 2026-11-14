@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/game/speed_game.dart';
+
 /// The four inks. Chosen to differ as much as possible; every button also
 /// shows the name, so colour is never the only cue on the controls.
 enum InkColour {
@@ -28,7 +30,7 @@ enum InkRule {
 }
 
 @immutable
-class InkTrial {
+class InkTrial implements SpeedTrial<InkColour> {
   const InkTrial(this.word, this.ink, this.rule);
 
   final InkColour word;
@@ -36,6 +38,11 @@ class InkTrial {
   final InkRule rule;
 
   bool get clash => word != ink;
+
+  @override
+  bool get conflict => clash;
+
+  @override
   InkColour get answer => rule == InkRule.ink ? ink : word;
 }
 
@@ -69,43 +76,10 @@ class InkDifficulty {
   static const int passMark = 10;
 }
 
-/// One answer: what was tapped (null = ran out of time) and how fast.
-@immutable
-class InkAnswer {
-  const InkAnswer(this.tapped, this.time);
-
-  final InkColour? tapped;
-  final Duration time;
-}
+typedef InkAnswer = SpeedAnswer<InkColour>;
 
 @immutable
-class InkResult {
-  const InkResult({
-    required this.right,
-    required this.correct,
-    required this.matchAvg,
-    required this.clashAvg,
-  });
-
-  final int right;
-
-  /// Per word: answered correctly?
-  final List<bool> correct;
-
-  /// Average time on correctly answered matching / clashing words, in
-  /// seconds (null when there were none).
-  final double? matchAvg;
-  final double? clashAvg;
-
-  bool get passed => right >= InkDifficulty.passMark;
-
-  /// Extra seconds the clash cost on average (null if not measurable).
-  double? get clashCost =>
-      matchAvg == null || clashAvg == null ? null : clashAvg! - matchAvg!;
-}
-
-@immutable
-class InkBlock {
+class InkBlock extends SpeedBlock<InkTrial, InkColour> {
   const InkBlock({
     required this.level,
     required this.seed,
@@ -113,66 +87,42 @@ class InkBlock {
     required this.limit,
   });
 
+  @override
   final int level;
+  @override
   final int seed;
+  @override
   final List<InkTrial> trials;
 
   /// Time allowed per word.
+  @override
   final Duration limit;
 
-  int get length => trials.length;
+  @override
+  int get passMark => InkDifficulty.passMark;
+
   bool get flips => trials.any((t) => t.rule == InkRule.word);
 
-  InkResult evaluate(List<InkAnswer> answers) {
-    final correct = <bool>[];
-    final matchTimes = <double>[], clashTimes = <double>[];
-    for (final (i, t) in trials.indexed) {
-      final a = i < answers.length ? answers[i] : null;
-      final ok = a?.tapped == t.answer;
-      correct.add(ok);
-      if (ok) {
-        (t.clash ? clashTimes : matchTimes).add(a!.time.inMilliseconds / 1000);
-      }
-    }
-    double? avg(List<double> xs) =>
-        xs.isEmpty ? null : xs.reduce((a, b) => a + b) / xs.length;
-    return InkResult(
-      right: correct.where((c) => c).length,
-      correct: correct,
-      matchAvg: avg(matchTimes),
-      clashAvg: avg(clashTimes),
-    );
-  }
+  @override
+  String get conflictName => 'Clashing words';
 
-  /// Review text: the first mistake explained, then what the clash cost.
-  String explain(InkResult r, List<InkAnswer> answers) {
-    final parts = <String>[];
+  @override
+  String get noCostSentence => 'Clashing words didn\'t slow you down.';
+
+  @override
+  String mistake(SpeedResult r, List<InkAnswer> answers) {
     final first = r.correct.indexOf(false);
-    if (first < 0) {
-      parts.add('All $length right.');
-    } else {
-      final t = trials[first];
-      final a = first < answers.length ? answers[first] : null;
-      final said =
-          'Word ${first + 1} said ${t.word.word} in '
-          '${t.ink.label.toLowerCase()} ink';
-      final why = flips ? ', and the cue said ${t.rule.cue}' : '';
-      parts.add(
-        a?.tapped == null
-            ? '$said and ran out of time; the answer was '
-                  '${t.answer.label.toLowerCase()}.'
-            : '$said$why, so the answer was ${t.answer.label.toLowerCase()}.',
-      );
-    }
-    final cost = r.clashCost;
-    if (cost != null) {
-      parts.add(
-        cost > 0.05
-            ? 'Clashing words took ${cost.toStringAsFixed(2)} s longer.'
-            : 'Clashing words didn\'t slow you down.',
-      );
-    }
-    return parts.join(' ');
+    if (first < 0) return 'All $length right.';
+    final t = trials[first];
+    final a = first < answers.length ? answers[first] : null;
+    final said =
+        'Word ${first + 1} said ${t.word.word} in '
+        '${t.ink.label.toLowerCase()} ink';
+    final why = flips ? ', and the cue said ${t.rule.cue}' : '';
+    return a?.tapped == null
+        ? '$said and ran out of time; the answer was '
+              '${t.answer.label.toLowerCase()}.'
+        : '$said$why, so the answer was ${t.answer.label.toLowerCase()}.';
   }
 }
 

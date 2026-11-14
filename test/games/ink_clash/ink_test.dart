@@ -59,9 +59,9 @@ void main() {
     final r = b.evaluate(answers);
     expect(r.right, 2);
     expect(r.correct, [true, false, true]);
-    expect(r.matchAvg, closeTo(0.9, 1e-9));
-    expect(r.clashAvg, closeTo(1.3, 1e-9));
-    expect(r.clashCost, closeTo(0.4, 1e-9));
+    expect(r.calmAvg, closeTo(0.9, 1e-9));
+    expect(r.conflictAvg, closeTo(1.3, 1e-9));
+    expect(r.conflictCost, closeTo(0.4, 1e-9));
     expect(
       b.explain(r, answers),
       'Word 2 said GREEN in pink ink, and the cue said INK, so the answer '

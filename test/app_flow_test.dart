@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartx/app.dart';
+import 'package:smartx/core/game/speed_game.dart';
 import 'package:smartx/core/skills/skill.dart';
 import 'package:smartx/core/storage/progress.dart';
 import 'package:smartx/features/games/games_screen.dart';
+import 'package:smartx/games/arrow_focus/arrow_controller.dart';
+import 'package:smartx/games/arrow_focus/arrow_puzzle.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
 import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
@@ -292,17 +295,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Get ready…'), findsOneWidget);
 
-    for (var block = 0; block < InkController.totalRounds; block++) {
-      await tester.pump(InkController.getReady);
+    for (var block = 0; block < SpeedController.totalRounds; block++) {
+      await tester.pump(SpeedController.getReady);
       var s = container.read(inkSessionProvider);
-      while (s.phase == InkPhase.playing) {
+      while (s.phase == SpeedPhase.playing) {
         if (s.flash == null) {
           final key = find.byKey(ValueKey('ink-${s.trial!.answer.name}'));
           await tester.tap(key);
           await tester.pump();
           expect(container.read(inkSessionProvider).flash?.correct, isTrue);
         }
-        await tester.pump(InkController.flashFor);
+        await tester.pump(SpeedController.flashFor);
         s = container.read(inkSessionProvider);
       }
       await tester.pumpAndSettle();
@@ -320,6 +323,84 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('3 of 3 correct · new personal best'), findsOneWidget);
     expect(container.read(progressProvider).xpFor(Skill.attention), 30);
+  });
+
+  Future<void> openArrowFocus(WidgetTester tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Arrow Focus');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Get ready…'), findsOneWidget);
+  }
+
+  testWidgets('a full Arrow Focus session: always tap the middle arrow', (
+    tester,
+  ) async {
+    await openArrowFocus(tester);
+    for (var block = 0; block < SpeedController.totalRounds; block++) {
+      await tester.pump(SpeedController.getReady);
+      var s = container.read(arrowSessionProvider);
+      expect(find.text('FOLLOW THE MIDDLE'), findsOneWidget);
+      while (s.phase == SpeedPhase.playing) {
+        if (s.flash == null) {
+          final key = find.byKey(ValueKey('arrow-${s.trial!.answer.name}'));
+          await tester.tap(key);
+          await tester.pump();
+          expect(container.read(arrowSessionProvider).flash?.correct, isTrue);
+        }
+        await tester.pump(SpeedController.flashFor);
+        s = container.read(arrowSessionProvider);
+      }
+      await tester.pumpAndSettle();
+      expect(s.result!.right, 12);
+      expect(find.textContaining('All 12 right.'), findsOneWidget);
+      expect(find.text('Arrows disagreed'), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('3 of 3 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).xpFor(Skill.attention), 30);
+  });
+
+  testWidgets('Arrow Focus: a swipe answers the row', (tester) async {
+    await openArrowFocus(tester);
+    await tester.pump(SpeedController.getReady);
+    final s = container.read(arrowSessionProvider);
+    final answer = s.trial!.answer;
+    final wrong = answer == ArrowDir.left ? ArrowDir.right : ArrowDir.left;
+    final travel = wrong == ArrowDir.left
+        ? const Offset(-120, 0)
+        : const Offset(120, 0);
+    await tester.flingFrom(const Offset(200, 400), travel, 1500);
+    await tester.pump();
+    final flash = container.read(arrowSessionProvider).flash;
+    expect(flash?.tapped, wrong);
+    expect(flash?.correct, isFalse);
+
+    // A short drag is not a swipe.
+    await tester.pump(SpeedController.flashFor);
+    await tester.dragFrom(const Offset(200, 400), const Offset(12, 0));
+    await tester.pump();
+    expect(container.read(arrowSessionProvider).flash, isNull);
+    expect(container.read(arrowSessionProvider).answers, hasLength(1));
   });
 
   test('restart puts the piece back and resets moves', () async {
