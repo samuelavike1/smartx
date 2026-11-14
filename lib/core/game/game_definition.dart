@@ -1,6 +1,9 @@
 import 'package:flutter/widgets.dart';
 
 import '../skills/skill.dart';
+import 'how_to_play.dart';
+
+export 'how_to_play.dart';
 
 /// Contract every mini-game implements so the shell (home, routing, stats)
 /// can list and launch it without knowing anything game-specific.
@@ -22,6 +25,13 @@ abstract class GameDefinition {
   /// One line describing what a level looks like, shown on the results
   /// screen when the level changes ("4×4 grid with 5 cells").
   String levelHint(int level) => 'Level $level';
+
+  /// The rules: shown before the first session, and from the ? button.
+  HowToPlay get howTo;
+
+  /// The game has a clock running during play, so its rules can only be
+  /// opened between rounds (the ? is dimmed while the clock runs).
+  bool get timed => false;
 
   /// Builds the screen that runs one session of the game.
   Widget buildScreen();

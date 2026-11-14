@@ -42,5 +42,27 @@ class PathFinderGame extends GameDefinition {
   }
 
   @override
+  HowToPlay get howTo => const HowToPlay(
+    steps: [
+      HowToStep(
+        Icons.swipe_rounded,
+        'Slide the piece',
+        'Swipe on the board or tap an arrow. It slides until a wall, the edge or a locked gate stops it.',
+      ),
+      HowToStep(
+        Icons.flag_rounded,
+        'Reach the flag in time',
+        'Get there within the move limit. Restart puts the piece back.',
+      ),
+      HowToStep(
+        Icons.key_rounded,
+        'Use keys and arrow tiles',
+        'Slide over the key to open every gate. Arrow tiles turn your slide.',
+      ),
+    ],
+    levels: 'bigger boards, keys and gates, arrow tiles, and no spare moves.',
+  );
+
+  @override
   Widget buildScreen() => const PathFinderScreen();
 }

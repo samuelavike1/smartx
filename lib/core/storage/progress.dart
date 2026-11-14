@@ -85,6 +85,13 @@ class ProgressRepository {
   Future<void> saveSkillXp(Skill skill, int xp) =>
       _prefs.setInt('skill.${skill.name}.xp', xp);
 
+  /// The game's How to play page has been shown (and Start tapped).
+  bool howToSeen(String gameId) =>
+      _prefs.getBool('howto.$gameId.seen') ?? false;
+
+  Future<void> markHowToSeen(String gameId) =>
+      _prefs.setBool('howto.$gameId.seen', true);
+
   /// Percent right for [skill] in the last finished Quick feed, if any.
   int? feedAccuracy(Skill skill) => _prefs.getInt('feed.${skill.name}.pct');
 

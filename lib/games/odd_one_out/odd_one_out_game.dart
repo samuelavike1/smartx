@@ -34,6 +34,31 @@ class OddOneOutGame extends GameDefinition {
   }
 
   @override
+  HowToPlay get howTo => const HowToPlay(
+    steps: [
+      HowToStep(
+        Icons.grid_view_rounded,
+        'Scan the grid',
+        'Every tile matches but one.',
+      ),
+      HowToStep(
+        Icons.touch_app_rounded,
+        'Tap the odd one',
+        'It differs in colour, shape, turn or size. Tap it before the bar runs out.',
+      ),
+      HowToStep(
+        Icons.search_rounded,
+        'Colour pops out, the rest needs a search',
+        'The review shows how much searching cost you.',
+      ),
+    ],
+    levels: 'bigger grids, smaller differences, then tiles in two colours.',
+  );
+
+  @override
+  bool get timed => true;
+
+  @override
   Widget buildScreen() => const OddScreen();
 }
 

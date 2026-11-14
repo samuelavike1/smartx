@@ -21,11 +21,13 @@ import 'package:smartx/games/path_finder/path_puzzle.dart';
 import 'package:smartx/games/pattern_sequence/pattern_sequence_controller.dart';
 import 'package:smartx/ui/widgets/glass_nav_bar.dart';
 
+import 'test_prefs.dart';
+
 void main() {
   late ProviderContainer container;
 
   Future<void> pumpApp(WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(rulesSeen());
     final prefs = await SharedPreferences.getInstance();
     container = ProviderContainer(
       overrides: [
@@ -562,7 +564,9 @@ void main() {
     tester.view.physicalSize = const Size(720, 1280);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
-    SharedPreferences.setMockInitialValues({'game.odds_on.level': 9});
+    SharedPreferences.setMockInitialValues(
+      rulesSeen({'game.odds_on.level': 9}),
+    );
     final prefs = await SharedPreferences.getInstance();
     container = ProviderContainer(
       overrides: [

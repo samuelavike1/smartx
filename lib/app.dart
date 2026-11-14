@@ -11,6 +11,7 @@ import 'features/skills/skills_screen.dart';
 import 'features/today/today_screen.dart';
 import 'ui/density.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/how_to_play.dart';
 
 GoRouter buildRouter() => GoRouter(
   initialLocation: '/today',
@@ -47,8 +48,10 @@ GoRouter buildRouter() => GoRouter(
       path: '/game/:id',
       builder: (_, state) {
         final game = findGame(state.pathParameters['id']!);
-        return game?.buildScreen() ??
-            const Scaffold(body: Center(child: Text('Game not found')));
+        return game == null
+            ? const Scaffold(body: Center(child: Text('Game not found')))
+            // First time: the How to play page, then the game.
+            : HowToGate(game: game);
       },
     ),
   ],

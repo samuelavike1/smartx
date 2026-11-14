@@ -77,6 +77,7 @@ class _RoundView extends ConsumerWidget {
           filled: state.round + (state.answered ? 1 : 0),
           total: state.totalRounds,
           score: state.score,
+          game: const OddsOnGame(),
         ),
         SizedBox(height: d.compact ? 10 : 14),
         LevelComboRow(

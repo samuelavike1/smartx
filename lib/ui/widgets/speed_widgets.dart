@@ -175,6 +175,8 @@ class _SpeedRoundState<B extends SpeedBlock<T, A>, T extends SpeedTrial<A>, A>
           filled: state.round + (state.answered ? 1 : 0),
           total: state.totalRounds,
           score: state.score,
+          game: screen.game,
+          helpReady: state.answered,
         ),
         SizedBox(height: d.compact ? 10 : 14),
         LevelComboRow(

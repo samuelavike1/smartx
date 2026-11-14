@@ -7,6 +7,8 @@ import '../density.dart';
 import '../lucid.dart';
 import 'press_scale.dart';
 import '../palette.dart';
+import '../../core/game/game_definition.dart';
+import 'how_to_play.dart';
 
 // Shared pieces of every game screen, taken from the "In game" and
 // "Results" artboards on the design canvas. New games compose these so they
@@ -72,11 +74,19 @@ class GameTopBar extends StatelessWidget {
     required this.filled,
     required this.total,
     required this.score,
+    this.game,
+    this.helpReady = true,
   });
 
   final int filled;
   final int total;
   final int score;
+
+  /// Shows a ? that opens this game's rules.
+  final GameDefinition? game;
+
+  /// False while a timed game's clock runs (the ? is dimmed).
+  final bool helpReady;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +139,12 @@ class GameTopBar extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: d.compact ? 10 : 12),
+        if (game case final game?) ...[
+          SizedBox(width: d.compact ? 2 : 4),
+          HowToButton(game: game, ready: helpReady),
+          SizedBox(width: d.compact ? 2 : 4),
+        ] else
+          SizedBox(width: d.compact ? 10 : 12),
         CountUp(
           value: score,
           style: lucidText(

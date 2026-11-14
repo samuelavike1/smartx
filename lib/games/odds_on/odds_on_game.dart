@@ -32,5 +32,27 @@ class OddsOnGame extends GameDefinition {
   String levelHint(int level) => OddsDifficulty.forLevel(level).hint;
 
   @override
+  HowToPlay get howTo => const HowToPlay(
+    steps: [
+      HowToStep(
+        Icons.casino_rounded,
+        'Picture the setup',
+        'Dice, coins, cards or a bag of balls. Everything is fair and random.',
+      ),
+      HowToStep(
+        Icons.calculate_rounded,
+        'Count equally likely outcomes',
+        'Then pick the exact chance from four fractions. There is no clock.',
+      ),
+      HowToStep(
+        Icons.school_rounded,
+        'Learn from the working',
+        'After each answer you see the steps, and what slip a wrong pick came from.',
+      ),
+    ],
+    levels: 'from one die up to "at least one", "given that…" and Bayes.',
+  );
+
+  @override
   Widget buildScreen() => const OddsScreen();
 }

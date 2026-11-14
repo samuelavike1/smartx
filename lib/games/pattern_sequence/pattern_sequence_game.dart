@@ -40,5 +40,27 @@ class PatternSequenceGame extends GameDefinition {
   }
 
   @override
+  HowToPlay get howTo => const HowToPlay(
+    steps: [
+      HowToStep(
+        Icons.visibility_rounded,
+        'Study the row',
+        'Each tile follows rules for its shape, its colour and how many there are.',
+      ),
+      HowToStep(
+        Icons.lightbulb_rounded,
+        'Find what changes',
+        'A rule can repeat a cycle, like circle, square, circle, or count up or down.',
+      ),
+      HowToStep(
+        Icons.touch_app_rounded,
+        'Pick the next tile',
+        'Choose from the options. Faster answers score a little more.',
+      ),
+    ],
+    levels: 'more features change at once, cycles get longer and counting rules join in.',
+  );
+
+  @override
   Widget buildScreen() => const PatternSequenceScreen();
 }

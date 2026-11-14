@@ -12,6 +12,8 @@ import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
 
+import '../test_prefs.dart';
+
 /// Fills and borders that only belong to light mode. If one shows up in
 /// dark mode, a screen is painting a raw colour instead of a palette role.
 const _dayOnly = {
@@ -59,7 +61,7 @@ void main() {
   Future<void> pumpDark(WidgetTester tester) async {
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(rulesSeen());
     final prefs = await SharedPreferences.getInstance();
     container = ProviderContainer(
       overrides: [
@@ -94,7 +96,7 @@ void main() {
   testWidgets('control: the check does find day colours in light mode', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(rulesSeen());
     final prefs = await SharedPreferences.getInstance();
     container = ProviderContainer(
       overrides: [
