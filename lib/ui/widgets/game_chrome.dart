@@ -105,7 +105,9 @@ class GameTopBar extends StatelessWidget {
         SizedBox(width: d.compact ? 10 : 12),
         Expanded(
           child: Semantics(
-            label: 'Round ${min(filled + 1, total)} of $total',
+            // [filled] includes the current round once it's answered, so
+            // say what is done rather than guess the round number.
+            label: '$filled of $total rounds done',
             child: Row(
               children: [
                 for (var i = 0; i < total; i++)

@@ -15,6 +15,7 @@ import 'package:smartx/games/echo_back/echo_puzzle.dart';
 import 'package:smartx/games/grid_recall/grid_recall_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/odd_one_out/odd_controller.dart';
+import 'package:smartx/games/odds_on/odds_controller.dart';
 import 'package:smartx/games/path_finder/path_controller.dart';
 import 'package:smartx/games/path_finder/path_puzzle.dart';
 import 'package:smartx/games/pattern_sequence/pattern_sequence_controller.dart';
@@ -491,6 +492,122 @@ void main() {
     expect(find.text('The odd one'), findsOneWidget);
     expect(find.text('Your tap'), findsOneWidget);
     expect(find.textContaining('Grid 1: the odd one was in'), findsOneWidget);
+  });
+
+  Future<void> openOddsOn(WidgetTester tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Odds On');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Odds On session: always pick the right probability', (
+    tester,
+  ) async {
+    await openOddsOn(tester);
+    for (var r = 0; r < OddsController.totalRounds; r++) {
+      final q = container.read(oddsSessionProvider).question;
+      expect(find.text(q.question), findsOneWidget);
+      final option = find.byKey(ValueKey('odds-${q.answerIndex}'));
+      await tester.ensureVisible(option);
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+      expect(find.text('Working it out'), findsOneWidget);
+      expect(find.text(q.insight), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.problemSolving), 80);
+    expect(progress.xpFor(Skill.logic), 40);
+  });
+
+  testWidgets('Odds On: a wrong pick shows both answers and the slip', (
+    tester,
+  ) async {
+    await openOddsOn(tester);
+    final q = container.read(oddsSessionProvider).question;
+    final wrong = (q.answerIndex + 1) % q.options.length;
+    await tester.tap(find.byKey(ValueKey('odds-$wrong')));
+    await tester.pumpAndSettle();
+    expect(find.text('Working it out'), findsOneWidget);
+    expect(find.textContaining('Your answer'), findsOneWidget);
+    expect(find.textContaining('Right ·'), findsOneWidget);
+    expect(find.text(q.feedbackFor(q.options[wrong])), findsOneWidget);
+    for (final step in q.steps) {
+      expect(find.text(step), findsOneWidget);
+    }
+  });
+
+  testWidgets('Odds On at level 9 fits a 360×640 phone, question and review', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(720, 1280);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'game.odds_on.level': 9});
+    final prefs = await SharedPreferences.getInstance();
+    container = ProviderContainer(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const SmartXApp()),
+    );
+    await tester.pumpAndSettle();
+    // Open it the way a player would, with the app's compact theme.
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    final card = find.text('Odds On');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(container.read(oddsSessionProvider).question.level, 9);
+    // Wrong answers show the longest review (the level drops as it should).
+    for (var r = 0; r < OddsController.totalRounds; r++) {
+      final q = container.read(oddsSessionProvider).question;
+      final wrong = (q.answerIndex + 1) % q.options.length;
+      final option = find.byKey(ValueKey('odds-$wrong'));
+      await tester.ensureVisible(option);
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+      expect(find.text('Working it out'), findsOneWidget);
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+    // Any overflow above would have failed the test.
+    expect(find.textContaining('0 of 8 correct'), findsOneWidget);
   });
 
   test('restart puts the piece back and resets moves', () async {

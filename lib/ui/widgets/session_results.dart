@@ -146,7 +146,13 @@ class SessionResults extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Next game: ${next.game.title}'),
+                      // Long game names shrink rather than overflow.
+                      Flexible(
+                        child: Text(
+                          'Next game: ${next.game.title}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       const Icon(Icons.chevron_right_rounded, size: 20),
                     ],
