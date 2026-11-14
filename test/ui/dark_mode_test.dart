@@ -9,6 +9,7 @@ import 'package:smartx/core/storage/progress.dart';
 import 'package:smartx/features/feed/feed_controller.dart';
 import 'package:smartx/features/feed/feed_plan.dart';
 import 'package:smartx/features/games/games_screen.dart';
+import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
@@ -199,6 +200,23 @@ void main() {
     }
     await tester.pumpAndSettle();
     expectNoDayColours(tester, 'Stop or Roll review');
+  });
+
+  testWidgets('Count It scenes and reviews are dark', (tester) async {
+    await pumpDark(tester);
+    await openGame(tester, 'Count It');
+    await tester.pumpAndSettle();
+    final c = container.read(countSessionProvider.notifier);
+    for (var r = 0; r < CountController.totalRounds; r++) {
+      expectNoDayColours(tester, 'Count It question');
+      final q = container.read(countSessionProvider).question;
+      // Alternate right and wrong, so both reviews get checked.
+      c.select(r.isEven ? q.answerIndex : (q.answerIndex + 1) % 4);
+      await tester.pumpAndSettle();
+      expectNoDayColours(tester, 'Count It review');
+      await c.next();
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets('an Ink Clash block and its review are dark', (tester) async {

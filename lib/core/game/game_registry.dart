@@ -1,5 +1,6 @@
 import '../../games/arrow_focus/arrow_focus_game.dart';
 import '../../games/better_bet/better_bet_game.dart';
+import '../../games/count_it/count_it_game.dart';
 import '../../games/deduce/deduce_game.dart';
 import '../../games/echo_back/echo_back_game.dart';
 import '../../games/grid_recall/grid_recall_game.dart';
@@ -28,6 +29,7 @@ const List<GameDefinition> gameRegistry = [
   BetterBetGame(),
   ScaleSleuthGame(),
   StopOrRollGame(),
+  CountItGame(),
 ];
 
 GameDefinition? findGame(String id) {
