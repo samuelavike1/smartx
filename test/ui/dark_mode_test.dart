@@ -276,6 +276,38 @@ void main() {
     await tester.pumpAndSettle();
     expectNoDayColours(tester, 'Teaser review');
   });
+  testWidgets('Ink Clash buttons are plain words, with no ink colours', (
+    tester,
+  ) async {
+    await pumpDark(tester);
+    await openGame(tester, 'Ink Clash');
+    await tester.pump(SpeedController.getReady);
+    final inks = {for (final c in InkColour.values) c.shade(night: true)};
+    for (final c in InkColour.values) {
+      final button = find.byKey(ValueKey('ink-${c.name}'));
+      expect(button, findsOneWidget);
+      expect(
+        find.descendant(of: button, matching: find.text(c.label)),
+        findsOneWidget,
+      );
+      final painted = tester
+          .widgetList<Container>(
+            find.descendant(of: button, matching: find.byType(Container)),
+          )
+          .map((w) => (w.decoration as BoxDecoration?)?.color ?? w.color);
+      final texts = tester
+          .widgetList<Text>(
+            find.descendant(of: button, matching: find.byType(Text)),
+          )
+          .map((t) => t.style?.color);
+      expect(
+        [...painted, ...texts].where(inks.contains),
+        isEmpty,
+        reason: '${c.label} button shows an ink colour',
+      );
+    }
+  });
+
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
     await pumpDark(tester);
     await openGame(tester, 'Ink Clash');

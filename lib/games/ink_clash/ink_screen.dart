@@ -86,6 +86,9 @@ final inkUi = SpeedUi<InkBlock, InkTrial, InkColour>(
   ),
 );
 
+/// A plain colour name in ordinary text. No swatch: matching a swatch to the
+/// ink by eye would skip naming the colour, and with it the clash the game
+/// trains.
 class _ColourLabel extends StatelessWidget {
   const _ColourLabel(this.colour);
 
@@ -94,27 +97,15 @@ class _ColourLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = Dims.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            color: colour.shade(night: context.palette.isNight),
-            shape: BoxShape.circle,
-          ),
+    return Center(
+      child: Text(
+        colour.label,
+        style: lucidText(
+          size: d.rowTitle,
+          weight: 600,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
-        const SizedBox(width: 10),
-        Text(
-          colour.label,
-          style: lucidText(
-            size: d.rowTitle,
-            weight: 600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
