@@ -1,8 +1,10 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'core/game/game_registry.dart';
+import 'core/storage/appearance.dart';
 import 'features/feed/feed_screen.dart';
 import 'features/games/games_screen.dart';
 import 'features/profile/profile_screen.dart';
@@ -67,14 +69,14 @@ GoRouter buildRouter() => GoRouter(
   ],
 );
 
-class SmartXApp extends StatefulWidget {
+class SmartXApp extends ConsumerStatefulWidget {
   const SmartXApp({super.key});
 
   @override
-  State<SmartXApp> createState() => _SmartXAppState();
+  ConsumerState<SmartXApp> createState() => _SmartXAppState();
 }
 
-class _SmartXAppState extends State<SmartXApp> {
+class _SmartXAppState extends ConsumerState<SmartXApp> {
   final _router = buildRouter();
 
   @override
@@ -90,6 +92,8 @@ class _SmartXAppState extends State<SmartXApp> {
       debugShowCheckedModeBanner: false,
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
+      // System, Light or Dark from Profile; changes crossfade.
+      themeMode: ref.watch(appearanceProvider),
       routerConfig: _router,
       builder: (context, child) {
         final brightness = Theme.of(context).brightness;

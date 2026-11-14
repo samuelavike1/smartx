@@ -97,6 +97,12 @@ class ProgressRepository {
 
   Future<void> saveFeedAccuracy(Skill skill, int percent) =>
       _prefs.setInt('feed.${skill.name}.pct', percent);
+
+  /// 'system', 'light' or 'dark' (null until chosen).
+  String? get themeMode => _prefs.getString('appearance.theme');
+
+  Future<void> saveThemeMode(String mode) =>
+      _prefs.setString('appearance.theme', mode);
 }
 
 /// Overridden in `main()` once SharedPreferences is loaded.
