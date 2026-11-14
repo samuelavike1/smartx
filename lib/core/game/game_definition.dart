@@ -33,6 +33,10 @@ abstract class GameDefinition {
   /// opened between rounds (the ? is dimmed while the clock runs).
   bool get timed => false;
 
+  /// False for games without levels (Teaser of the day): no level card on
+  /// results, no level on Profile.
+  bool get hasLevels => true;
+
   /// Builds the screen that runs one session of the game.
   Widget buildScreen();
 }

@@ -72,7 +72,7 @@ void main() {
 
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(find.text('Sessions played'), findsOneWidget);
+    expect(find.text('Games tried'), findsOneWidget);
   });
 
   testWidgets('a full session can be played and is saved', (tester) async {

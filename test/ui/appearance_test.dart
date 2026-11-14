@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartx/app.dart';
 import 'package:smartx/core/storage/progress.dart';
+import 'package:smartx/features/profile/profile_screen.dart';
 import 'package:smartx/ui/palette.dart';
 
 import '../test_prefs.dart';
@@ -31,6 +32,18 @@ void main() {
 
   Future<void> openProfile(WidgetTester tester) async {
     await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+    // Appearance sits at the end of the page.
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('theme-dark')),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(ProfileScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
   }
 

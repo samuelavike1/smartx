@@ -44,7 +44,7 @@ class GlassNavBar extends StatelessWidget {
 
     Widget bar = Container(
       height: d.navHeight,
-      padding: EdgeInsets.all(d.compact ? 5 : 6),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: tint,
         borderRadius: BorderRadius.circular(999),
@@ -106,7 +106,7 @@ class GlassNavBar extends StatelessWidget {
       top: false,
       minimum: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
@@ -149,12 +149,12 @@ class _Tab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(item.icon, size: d.compact ? 20 : 22, color: color),
-            SizedBox(height: d.compact ? 1 : 2),
+            Icon(item.icon, size: d.compact ? 18 : 20, color: color),
+            const SizedBox(height: 1),
             AnimatedDefaultTextStyle(
               duration: Lucid.slide,
               style: lucidText(
-                size: d.compact ? 11 : 12,
+                size: d.compact ? 10 : 11,
                 weight: selected ? 600 : 500,
                 color: color,
               ),

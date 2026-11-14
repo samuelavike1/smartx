@@ -119,7 +119,7 @@ class SessionResults extends ConsumerWidget {
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
-                if (showLevel) ...[
+                if (showLevel && game.hasLevels) ...[
                   SizedBox(height: gap),
                   _LevelBanner(
                     from: startLevel,

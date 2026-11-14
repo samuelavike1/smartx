@@ -25,6 +25,9 @@ class TeaserGame extends GameDefinition {
   IconData get icon => Icons.lightbulb_rounded;
 
   @override
+  bool get hasLevels => false;
+
+  @override
   List<Skill> get skills => const [Skill.problemSolving, Skill.logic];
 
   @override
