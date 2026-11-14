@@ -5,10 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartx/app.dart';
 import 'package:smartx/core/skills/skill.dart';
 import 'package:smartx/core/storage/progress.dart';
+import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
 import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
 import 'package:smartx/games/grid_recall/grid_recall_controller.dart';
+import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/path_finder/path_controller.dart';
 import 'package:smartx/games/path_finder/path_puzzle.dart';
 import 'package:smartx/games/pattern_sequence/pattern_sequence_controller.dart';
@@ -266,6 +268,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('4 of 4 correct · new personal best'), findsOneWidget);
     expect(container.read(progressProvider).xpFor(Skill.memory), 40);
+  });
+
+  testWidgets('a full Ink Clash session: always tap the right colour', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    // The Games list builds cards lazily: scroll until this one exists.
+    final card = find.text('Ink Clash');
+    await tester.scrollUntilVisible(
+      card,
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Get ready…'), findsOneWidget);
+
+    for (var block = 0; block < InkController.totalRounds; block++) {
+      await tester.pump(InkController.getReady);
+      var s = container.read(inkSessionProvider);
+      while (s.phase == InkPhase.playing) {
+        if (s.flash == null) {
+          final key = find.byKey(ValueKey('ink-${s.trial!.answer.name}'));
+          await tester.tap(key);
+          await tester.pump();
+          expect(container.read(inkSessionProvider).flash?.correct, isTrue);
+        }
+        await tester.pump(InkController.flashFor);
+        s = container.read(inkSessionProvider);
+      }
+      await tester.pumpAndSettle();
+      expect(s.result!.right, 12);
+      expect(find.textContaining('All 12 right.'), findsOneWidget);
+      expect(find.text('Your speed'), findsOneWidget);
+
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('3 of 3 correct · new personal best'), findsOneWidget);
+    expect(container.read(progressProvider).xpFor(Skill.attention), 30);
   });
 
   test('restart puts the piece back and resets moves', () async {

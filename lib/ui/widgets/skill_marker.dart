@@ -4,7 +4,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/skills/skill.dart';
 
-/// The small coloured shape that identifies a skill.
+/// The small coloured shape that identifies a skill. It always sits next to
+/// the skill's name, so screen readers skip it (the name is read once).
 class SkillMarkerIcon extends StatelessWidget {
   const SkillMarkerIcon(this.skill, {super.key, this.size = 12, this.color});
 
@@ -16,8 +17,7 @@ class SkillMarkerIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: skill.label,
+    return ExcludeSemantics(
       child: SizedBox.square(
         dimension: size,
         child: CustomPaint(
