@@ -6,6 +6,7 @@ import 'package:smartx/app.dart';
 import 'package:smartx/core/game/game_registry.dart';
 import 'package:smartx/core/game/speed_game.dart';
 import 'package:smartx/core/storage/progress.dart';
+import 'package:smartx/features/feed/feed_controller.dart';
 import 'package:smartx/features/feed/feed_plan.dart';
 import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
@@ -188,13 +189,17 @@ void main() {
   });
 
   testWidgets('a Quick feed card, played and done, is dark', (tester) async {
+    // A fixed run of cards, so the test doesn't depend on which comes first.
+    FeedController.seed = 7;
+    addTearDown(() => FeedController.seed = null);
     await pumpDark(tester);
     await tester.tap(find.byKey(const ValueKey('open-feed')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expectNoDayColours(tester, 'feed card');
     // Let the card play out (speed cards time out; tap a pattern option).
-    for (var i = 0; i < 40; i++) {
+    // Long enough for the slowest card (5 timed-out grids at 4 s each).
+    for (var i = 0; i < 80; i++) {
       final option = find.byKey(const ValueKey('option-0'));
       if (option.evaluate().isNotEmpty) {
         await tester.tap(option);

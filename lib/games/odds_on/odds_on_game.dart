@@ -23,10 +23,8 @@ class OddsOnGame extends GameDefinition {
   @override
   IconData get icon => Icons.casino_rounded;
 
-  // Until there is a Numbers skill, probability trains problem solving and
-  // logic.
   @override
-  List<Skill> get skills => const [Skill.problemSolving, Skill.logic];
+  List<Skill> get skills => const [Skill.numbers, Skill.logic];
 
   @override
   String levelHint(int level) => OddsDifficulty.forLevel(level).hint;

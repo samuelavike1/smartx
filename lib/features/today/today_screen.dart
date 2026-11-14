@@ -424,13 +424,19 @@ class _SkillsCard extends StatelessWidget {
               children: [
                 for (final (i, s) in Skill.values.indexed) ...[
                   if (i > 0) const SizedBox(width: 8),
+                  // Six skills on a narrow phone: a long label ("Numbers")
+                  // shrinks a touch rather than wrap or clip.
                   Expanded(
-                    child: Text(
-                      s.shortLabel,
-                      textAlign: TextAlign.center,
-                      style: lucidText(
-                        size: 11,
-                        color: scheme.onSurfaceVariant,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        s.shortLabel,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: lucidText(
+                          size: 11,
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),

@@ -537,7 +537,7 @@ void main() {
     }
     expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
     final progress = container.read(progressProvider);
-    expect(progress.xpFor(Skill.problemSolving), 80);
+    expect(progress.xpFor(Skill.numbers), 80);
     expect(progress.xpFor(Skill.logic), 40);
   });
 

@@ -71,6 +71,22 @@ class _MarkerPainter extends CustomPainter {
             ..close(),
           fill,
         );
+      case SkillMarker.plus:
+        final arm = s * 0.34;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: c, width: arm, height: s),
+            Radius.circular(arm * 0.25),
+          ),
+          fill,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: c, width: s, height: arm),
+            Radius.circular(arm * 0.25),
+          ),
+          fill,
+        );
       case SkillMarker.ring:
         final stroke = s * 0.25;
         canvas.drawCircle(
