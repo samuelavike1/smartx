@@ -13,6 +13,8 @@ import 'package:smartx/games/better_bet/bet_controller.dart';
 import 'package:smartx/games/better_bet/bet_puzzle.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_puzzle.dart';
+import 'package:smartx/games/odds_on/odds_math.dart';
+import 'package:smartx/games/stop_or_roll/stop_controller.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
 import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
@@ -897,6 +899,88 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(next);
         await tester.pumpAndSettle();
+      }
+    });
+  }
+
+  Future<void> openStopOrRoll(WidgetTester tester) async {
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Stop or Roll'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop or Roll'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  /// Plays one game of Stop or Roll, making every call [right] or wrong.
+  Future<void> playStop(WidgetTester tester, {required bool right}) async {
+    while (!container.read(stopSessionProvider).answered) {
+      final g = container.read(stopSessionProvider).game;
+      final roll = g.values.rollValue(g.left, g.hold) > Frac(g.hold);
+      await tapKey(tester, (roll == right) ? 'stop-roll' : 'stop-keep');
+    }
+    expect(find.text('Your calls'), findsOneWidget);
+    final next = find.byType(FilledButton);
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Stop or Roll session: every call right', (tester) async {
+    StopController.seed = 3;
+    addTearDown(() => StopController.seed = null);
+    await pumpApp(tester);
+    await openStopOrRoll(tester);
+    for (var r = 0; r < StopController.totalRounds; r++) {
+      await playStop(tester, right: true);
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.numbers), 80);
+    expect(progress.xpFor(Skill.problemSolving), 40);
+  });
+
+  for (final level in [6, 7, 10]) {
+    testWidgets('Stop or Roll at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      StopController.seed = level;
+      addTearDown(() => StopController.seed = null);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.stop_or_roll.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openStopOrRoll(tester);
+      // Wrong calls run the longest games and reviews; any overflow fails.
+      for (var r = 0; r < 3; r++) {
+        await playStop(tester, right: false);
       }
     });
   }

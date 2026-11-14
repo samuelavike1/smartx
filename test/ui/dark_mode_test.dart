@@ -13,6 +13,7 @@ import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
+import 'package:smartx/games/stop_or_roll/stop_controller.dart';
 
 import '../test_prefs.dart';
 
@@ -183,6 +184,21 @@ void main() {
     c.name();
     await tester.pumpAndSettle();
     expectNoDayColours(tester, 'Scale Sleuth review');
+  });
+
+  testWidgets('Stop or Roll calls and review are dark', (tester) async {
+    await pumpDark(tester);
+    await openGame(tester, 'Stop or Roll');
+    await tester.pumpAndSettle();
+    final c = container.read(stopSessionProvider.notifier);
+    c.roll();
+    await tester.pumpAndSettle();
+    expectNoDayColours(tester, 'Stop or Roll with a call');
+    while (!container.read(stopSessionProvider).answered) {
+      c.roll();
+    }
+    await tester.pumpAndSettle();
+    expectNoDayColours(tester, 'Stop or Roll review');
   });
 
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
