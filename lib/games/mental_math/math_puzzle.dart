@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/game/answer_options.dart';
 import '../../core/game/speed_game.dart';
 
 // Mental Math: a quick sum, four options, a time limit. Built on the
@@ -194,29 +195,26 @@ class MathGenerator {
 
   MathTrial _trial(MathKind kind, Random rng) {
     final d = _draft(kind, rng);
-    final options = <int>{d.answer};
-    for (final s in d.slips) {
-      if (options.length == 4) break;
-      if (s > 0) options.add(s);
-    }
+    // Near misses on both sides, so the answer can sit anywhere.
     final near = [
-      d.answer + 1,
-      d.answer - 1,
-      d.answer + 10,
-      d.answer - 10,
-      d.answer + 2,
-      d.answer + 20,
+      for (final k in const [1, 2, 9, 10, 11, 20]) ...[
+        d.answer + k,
+        d.answer - k,
+      ],
     ]..shuffle(rng);
-    for (final s in near) {
-      if (options.length == 4) break;
-      if (s > 0) options.add(s);
-    }
+    final options = balancedOptions(
+      d.answer,
+      d.slips.where((s) => s > 0),
+      near.where((s) => s > 0),
+      rng,
+      compare: (a, b) => a.compareTo(b),
+    );
     return MathTrial(
       kind: d.kind,
       text: d.text,
       spoken: d.spoken,
       answer: d.answer,
-      options: options.toList()..sort(),
+      options: options,
       hard: d.hard,
       how: d.how,
     );

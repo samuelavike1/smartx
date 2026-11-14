@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/game/answer_options.dart';
 import 'odds_math.dart';
 
 // Odds On: a probability question with an exact answer, four options and a
@@ -252,11 +253,14 @@ class OddsGenerator {
       Frac(answer.n + 1, answer.d + 1),
       Frac(answer.n + 2, answer.d + 2),
     ]..shuffle(rng);
-    final options = <Frac>{answer, ...slips.keys};
-    for (final f in near) {
-      if (options.length == 4) break;
-      if (f.isProbability && f != Frac.one) options.add(f);
-    }
+    // Sorted, with the answer at a random position.
+    final options = balancedOptions(
+      answer,
+      slips.keys,
+      near.where((f) => f.isProbability && f != Frac.one),
+      rng,
+      compare: (a, b) => a.compareTo(b),
+    );
     return OddsQuestion(
       level: level,
       seed: seed,
@@ -265,7 +269,7 @@ class OddsGenerator {
       question: draft.question,
       short: draft.short,
       answer: answer,
-      options: options.toList()..sort(),
+      options: options,
       steps: draft.steps,
       insight: draft.insight,
       slips: {
