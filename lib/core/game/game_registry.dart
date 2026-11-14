@@ -14,6 +14,7 @@ import '../../games/path_finder/path_finder_game.dart';
 import '../../games/pattern_sequence/pattern_sequence_game.dart';
 import '../../games/scale_sleuth/scale_sleuth_game.dart';
 import '../../games/stop_or_roll/stop_or_roll_game.dart';
+import '../../games/teaser/teaser_game.dart';
 import 'game_definition.dart';
 
 /// All games available in the app, in display order.
@@ -34,6 +35,7 @@ const List<GameDefinition> gameRegistry = [
   CountItGame(),
   BestRunGame(),
   CoinRaceGame(),
+  TeaserGame(),
 ];
 
 GameDefinition? findGame(String id) {

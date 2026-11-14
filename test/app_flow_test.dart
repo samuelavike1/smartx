@@ -20,6 +20,8 @@ import 'package:smartx/games/coin_race/coin_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/odds_on/odds_math.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
+import 'package:smartx/games/teaser/teaser_book.dart';
+import 'package:smartx/games/teaser/teaser_controller.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
 import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
@@ -1230,6 +1232,106 @@ void main() {
       }
     });
   }
+  Future<void> openTeaser(WidgetTester tester) async {
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Teaser of the day'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Teaser of the day'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Teaser of the day: a hint, the answer, then a bonus teaser', (
+    tester,
+  ) async {
+    TeaserController.today = DateTime(2026, 11, 14, 9);
+    addTearDown(() => TeaserController.today = null);
+    await pumpApp(tester);
+    await openTeaser(tester);
+    final daily = TeaserBook.forDay(DateTime(2026, 11, 14));
+    expect(find.text(daily.title), findsOneWidget);
+    expect(
+      find.textContaining('Teaser of the day · Sat 14 Nov'),
+      findsOneWidget,
+    );
+    await tapKey(tester, 'teaser-hint');
+    expect(find.text(daily.hints.first), findsOneWidget);
+    expect(find.text('2 hints left · each costs 30 points'), findsOneWidget);
+    final s = container.read(teaserSessionProvider);
+    await tapKey(tester, 'teaser-${s.answerIndex}');
+    expect(find.text('How it works'), findsOneWidget);
+    expect(find.text('1 hint used'), findsOneWidget);
+    expect(
+      container.read(teaserSessionProvider).points,
+      TeaserBook.pointsFor(daily, 1),
+    );
+    final next = find.byType(FilledButton);
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+    expect(find.text('1 of 1 correct · new personal best'), findsOneWidget);
+    // Teasers have no levels, so no level card.
+    expect(find.textContaining('level'), findsNothing);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.problemSolving), 10);
+    expect(progress.xpFor(Skill.logic), 5);
+
+    // Again the same day: a bonus teaser, not the day's own.
+    container.invalidate(teaserSessionProvider);
+    await tester.pumpAndSettle();
+    final bonus = container.read(teaserSessionProvider);
+    expect(bonus.bonus, isTrue);
+    expect(bonus.teaser.id, isNot(daily.id));
+  });
+
+  testWidgets('every teaser, with every hint, fits a 360×640 phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(720, 1280);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(() => TeaserController.today = null);
+    SharedPreferences.setMockInitialValues(rulesSeen());
+    final prefs = await SharedPreferences.getInstance();
+    container = ProviderContainer(
+      overrides: [
+        progressRepositoryProvider.overrideWithValue(ProgressRepository(prefs)),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const SmartXApp()),
+    );
+    await tester.pumpAndSettle();
+    await openTeaser(tester);
+    final seen = <String>{};
+    for (var d = 0; d < TeaserBook.order.length; d++) {
+      TeaserController.today = DateTime(2026, 11, 14 + d);
+      container.invalidate(teaserSessionProvider);
+      await tester.pumpAndSettle();
+      final c = container.read(teaserSessionProvider.notifier);
+      for (var h = 0; h < 3; h++) {
+        await tapKey(tester, 'teaser-hint');
+      }
+      expect(find.text('No hints left'), findsOneWidget);
+      final s = container.read(teaserSessionProvider);
+      seen.add(s.teaser.id);
+      // A wrong pick shows both answers and the longest review.
+      c.select((s.answerIndex + 1) % 4);
+      await tester.pumpAndSettle();
+      expect(find.text('How it works'), findsOneWidget);
+    }
+    expect(seen, hasLength(TeaserBook.order.length));
+  });
   test('restart puts the piece back and resets moves', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();

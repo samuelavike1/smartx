@@ -16,6 +16,7 @@ import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
+import 'package:smartx/games/teaser/teaser_controller.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
 
 import '../test_prefs.dart';
@@ -261,6 +262,20 @@ void main() {
       }
     });
   }
+  testWidgets('Teaser of the day, hints and review are dark', (tester) async {
+    await pumpDark(tester);
+    await openGame(tester, 'Teaser of the day');
+    await tester.pumpAndSettle();
+    final c = container.read(teaserSessionProvider.notifier);
+    c.showHint();
+    c.showHint();
+    await tester.pumpAndSettle();
+    expectNoDayColours(tester, 'Teaser with hints');
+    final s = container.read(teaserSessionProvider);
+    c.select((s.answerIndex + 1) % 4);
+    await tester.pumpAndSettle();
+    expectNoDayColours(tester, 'Teaser review');
+  });
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
     await pumpDark(tester);
     await openGame(tester, 'Ink Clash');

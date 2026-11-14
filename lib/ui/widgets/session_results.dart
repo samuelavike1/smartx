@@ -29,6 +29,7 @@ class SessionResults extends ConsumerWidget {
     required this.nearMiss,
     required this.onPlayAgain,
     required this.onTrySimilar,
+    this.showLevel = true,
   });
 
   final GameDefinition game;
@@ -41,6 +42,9 @@ class SessionResults extends ConsumerWidget {
   final NearMiss? nearMiss;
   final VoidCallback onPlayAgain;
   final VoidCallback onTrySimilar;
+
+  /// Off for games without levels (Teaser of the day).
+  final bool showLevel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -111,12 +115,14 @@ class SessionResults extends ConsumerWidget {
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
-                SizedBox(height: gap),
-                _LevelBanner(
-                  from: startLevel,
-                  to: level,
-                  hint: game.levelHint(level),
-                ),
+                if (showLevel) ...[
+                  SizedBox(height: gap),
+                  _LevelBanner(
+                    from: startLevel,
+                    to: level,
+                    hint: game.levelHint(level),
+                  ),
+                ],
                 SizedBox(height: gap),
                 _XpCard(result: result, progress: progress),
                 if (nearMiss != null) ...[
