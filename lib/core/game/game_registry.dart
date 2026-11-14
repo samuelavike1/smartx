@@ -10,6 +10,7 @@ import '../../games/ink_clash/ink_clash_game.dart';
 import '../../games/mental_math/mental_math_game.dart';
 import '../../games/odd_one_out/odd_one_out_game.dart';
 import '../../games/odds_on/odds_on_game.dart';
+import '../../games/options_desk/options_desk_game.dart';
 import '../../games/path_finder/path_finder_game.dart';
 import '../../games/pattern_sequence/pattern_sequence_game.dart';
 import '../../games/scale_sleuth/scale_sleuth_game.dart';
@@ -36,6 +37,7 @@ const List<GameDefinition> gameRegistry = [
   BestRunGame(),
   CoinRaceGame(),
   TeaserGame(),
+  OptionsDeskGame(),
 ];
 
 GameDefinition? findGame(String id) {

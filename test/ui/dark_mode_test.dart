@@ -15,6 +15,7 @@ import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
+import 'package:smartx/games/options_desk/desk_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
 import 'package:smartx/games/teaser/teaser_controller.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
@@ -308,6 +309,25 @@ void main() {
     }
   });
 
+  for (final level in [2, 7, 10]) {
+    testWidgets('Options Desk at level $level and its reviews are dark', (
+      tester,
+    ) async {
+      await pumpDark(tester, {'game.options_desk.level': level});
+      await openGame(tester, 'Options Desk');
+      await tester.pumpAndSettle();
+      final c = container.read(deskSessionProvider.notifier);
+      for (var r = 0; r < 2; r++) {
+        expectNoDayColours(tester, 'Options Desk question');
+        final q = container.read(deskSessionProvider).question;
+        c.select(r.isEven ? q.answerIndex : (q.answerIndex + 1) % 4);
+        await tester.pumpAndSettle();
+        expectNoDayColours(tester, 'Options Desk review');
+        await c.next();
+        await tester.pumpAndSettle();
+      }
+    });
+  }
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
     await pumpDark(tester);
     await openGame(tester, 'Ink Clash');

@@ -19,6 +19,7 @@ import 'package:smartx/games/best_run/run_controller.dart';
 import 'package:smartx/games/coin_race/coin_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/odds_on/odds_math.dart';
+import 'package:smartx/games/options_desk/desk_controller.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
 import 'package:smartx/games/teaser/teaser_book.dart';
 import 'package:smartx/games/teaser/teaser_controller.dart';
@@ -1332,6 +1333,82 @@ void main() {
     }
     expect(seen, hasLength(TeaserBook.order.length));
   });
+  Future<void> openDesk(WidgetTester tester) async {
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Options Desk'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Options Desk'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> answerDesk(WidgetTester tester, {required bool right}) async {
+    final q = container.read(deskSessionProvider).question;
+    final i = right ? q.answerIndex : (q.answerIndex + 1) % 4;
+    await tapKey(tester, 'desk-$i');
+    expect(find.text('Working it out'), findsOneWidget);
+    expect(find.text(q.feedbackFor(q.options[i])), findsOneWidget);
+    final next = find.byType(FilledButton);
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Options Desk session: every answer right', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    await openDesk(tester);
+    for (var r = 0; r < DeskController.totalRounds; r++) {
+      await answerDesk(tester, right: true);
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.numbers), 80);
+    expect(progress.xpFor(Skill.problemSolving), 40);
+  });
+
+  for (final level in [5, 7, 9, 10]) {
+    testWidgets('Options Desk at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.options_desk.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openDesk(tester);
+      for (var r = 0; r < 4; r++) {
+        await answerDesk(tester, right: false);
+      }
+    });
+  }
   test('restart puts the piece back and resets moves', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
