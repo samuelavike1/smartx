@@ -9,6 +9,7 @@ import '../../games/odd_one_out/odd_one_out_game.dart';
 import '../../games/odds_on/odds_on_game.dart';
 import '../../games/path_finder/path_finder_game.dart';
 import '../../games/pattern_sequence/pattern_sequence_game.dart';
+import '../../games/scale_sleuth/scale_sleuth_game.dart';
 import 'game_definition.dart';
 
 /// All games available in the app, in display order.
@@ -24,6 +25,7 @@ const List<GameDefinition> gameRegistry = [
   OddsOnGame(),
   MentalMathGame(),
   BetterBetGame(),
+  ScaleSleuthGame(),
 ];
 
 GameDefinition? findGame(String id) {

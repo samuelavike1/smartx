@@ -11,6 +11,8 @@ import 'package:smartx/games/arrow_focus/arrow_controller.dart';
 import 'package:smartx/games/arrow_focus/arrow_puzzle.dart';
 import 'package:smartx/games/better_bet/bet_controller.dart';
 import 'package:smartx/games/better_bet/bet_puzzle.dart';
+import 'package:smartx/games/scale_sleuth/scale_controller.dart';
+import 'package:smartx/games/scale_sleuth/scale_puzzle.dart';
 import 'package:smartx/games/deduce/deduce_controller.dart';
 import 'package:smartx/games/echo_back/echo_controller.dart';
 import 'package:smartx/games/echo_back/echo_puzzle.dart';
@@ -754,6 +756,142 @@ void main() {
         await tester.tap(pick);
         await tester.pumpAndSettle();
         expect(find.text('Working it out'), findsOneWidget);
+        final next = find.byType(FilledButton);
+        await tester.ensureVisible(next);
+        await tester.pumpAndSettle();
+        await tester.tap(next);
+        await tester.pumpAndSettle();
+      }
+    });
+  }
+
+  Future<void> tapKey(WidgetTester tester, String key) async {
+    final f = find.byKey(ValueKey(key)).hitTestable();
+    await tester.ensureVisible(find.byKey(ValueKey(key)));
+    await tester.pumpAndSettle();
+    await tester.tap(f.first);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> weighOnScreen(
+    WidgetTester tester,
+    List<int> left,
+    List<int> right,
+  ) async {
+    await tapKey(tester, 'switch-left');
+    for (final c in left) {
+      await tapKey(tester, 'coin-$c');
+    }
+    await tapKey(tester, 'switch-right');
+    for (final c in right) {
+      await tapKey(tester, 'coin-$c');
+    }
+    await tapKey(tester, 'scale-weigh');
+  }
+
+  Future<void> openScaleSleuth(WidgetTester tester) async {
+    await tester.tap(find.text('Games').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Scale Sleuth'),
+      200,
+      scrollable: find.descendant(
+        of: find.byType(GamesScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scale Sleuth'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Scale Sleuth session: weigh well, name the fake', (
+    tester,
+  ) async {
+    ScaleController.seed = 5;
+    addTearDown(() => ScaleController.seed = null);
+    await pumpApp(tester);
+    await openScaleSleuth(tester);
+    for (var r = 0; r < ScaleController.totalRounds; r++) {
+      var q = container.read(scaleSessionProvider).puzzle;
+      while (q.suspects.coins.length > 1) {
+        final w = q.solver.suggest(q.suspects, q.weighingsLeft)!;
+        if (container.read(scaleSessionProvider).left.isNotEmpty ||
+            container.read(scaleSessionProvider).right.isNotEmpty) {
+          await tapKey(tester, 'scale-clear');
+        }
+        await weighOnScreen(tester, w.left, w.right);
+        q = container.read(scaleSessionProvider).puzzle;
+        expect(find.text(q.log.last.tilt.label), findsWidgets);
+      }
+      if (!container.read(scaleSessionProvider).naming) {
+        await tapKey(tester, 'scale-name');
+      }
+      await tapKey(tester, 'coin-${q.suspects.coins.single}');
+      await tapKey(tester, 'scale-confirm');
+      expect(container.read(scaleSessionProvider).lastCorrect, isTrue);
+      expect(
+        find.textContaining('Only coin ${q.suspects.coins.single} fits'),
+        findsOneWidget,
+      );
+      final next = find.byType(FilledButton);
+      await tester.ensureVisible(next);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('6 of 6 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.logic), 60);
+    expect(progress.xpFor(Skill.problemSolving), 30);
+  });
+
+  for (final level in [6, 10]) {
+    testWidgets('Scale Sleuth at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      ScaleController.seed = level;
+      addTearDown(() => ScaleController.seed = null);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.scale_sleuth.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openScaleSleuth(tester);
+      // Weak weighings use them all up and give the longest review; any
+      // overflow fails the test.
+      for (var r = 0; r < 2; r++) {
+        final coins = container.read(scaleSessionProvider).puzzle.coins;
+        while (container.read(scaleSessionProvider).puzzle.weighingsLeft > 0) {
+          if (container.read(scaleSessionProvider).left.isNotEmpty) {
+            await tapKey(tester, 'scale-clear');
+          }
+          await weighOnScreen(tester, [1, 2], [3, coins]);
+        }
+        expect(container.read(scaleSessionProvider).naming, isTrue);
+        await tapKey(tester, 'coin-1');
+        await tapKey(tester, 'scale-confirm');
+        final s = container.read(scaleSessionProvider);
+        expect(s.lastCorrect, isFalse);
+        expect(find.textContaining('The slip:'), findsOneWidget);
         final next = find.byType(FilledButton);
         await tester.ensureVisible(next);
         await tester.pumpAndSettle();
