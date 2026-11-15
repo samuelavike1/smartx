@@ -15,6 +15,32 @@ void main() {
     expect(mathPlain(r'\lim_{x \to 0} \frac{\sin x}{x}'), contains('lim'));
     expect(mathPlain(r'2\pi r'), '2π r');
     expect(mathPlain(r'\sin x'), 'sin x');
+    expect(mathPlain(r'\max_{s \le 4} W_s'), 'max_(s ≤ 4) W_s');
+    expect(mathPlain(r'\min_{t} X_t'), 'min_t X_t');
+    expect(mathPlain(r'P(\tau_{3} < \tau_{-2})'), 'P(τ_3 < τ_(−2))');
+    expect(mathPlain(r'W_t \sim N(0, t)'), 'W_t ∼ N(0, t)');
+    expect(
+      mathPlain(r'\tau_{x} = \text{first time W reaches }x'),
+      'τ_x = first time W reaches x',
+    );
+  });
+
+  testWidgets('\\text keeps its words and spaces together', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: MathText(r'\tau = \text{first time at } a')),
+      ),
+    );
+    expect(find.text('first time at '), findsOneWidget);
+  });
+
+  testWidgets('a minus after ∼ is a sign', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: MathText(r'X \sim -Y'))),
+    );
+    expect(find.text(' − '), findsNothing);
+    expect(find.text('−'), findsOneWidget);
+    expect(find.text(' ∼ '), findsOneWidget);
   });
 
   testWidgets('a leading minus is a sign; between terms, an operator', (

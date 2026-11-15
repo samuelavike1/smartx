@@ -31,6 +31,7 @@ enum GameCategory {
       'coin_race',
       'random_walk',
       'spread_bell',
+      'brownian_path',
     ],
   ),
   maths(

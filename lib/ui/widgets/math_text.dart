@@ -15,9 +15,10 @@ import '../lucid.dart';
 /// | `\lim_{x \to 0}`        | "lim" with the limit below    |
 /// | `\mat{1,2;3,4}`         | a matrix in square brackets   |
 /// | `\det{1,2;3,4}`         | a determinant (straight bars) |
-/// | `\pi \theta \lambda …`  | Greek letters                 |
-/// | `\cdot \times \to \infty \le \ge \ne \approx \pm` | symbols |
-/// | `\sin \cos \ln \exp`    | upright function names        |
+/// | `\pi \theta \lambda \tau …` | Greek letters             |
+/// | `\cdot \times \to \infty \le \ge \ne \approx \pm \sim` | symbols |
+/// | `\sin \cos \ln \exp \max \min` | upright function names |
+/// | `\text{first time at }` | words, with ordinary spaces   |
 ///
 /// Spaces in the source are kept as thin spaces; `*` shows as `·` and `-`
 /// as a proper minus sign. Anything unknown is shown as written, so a typo
@@ -92,6 +93,7 @@ const _operators = {
   '≈',
   '→',
   '±',
+  '∼',
   '(',
 };
 
@@ -132,6 +134,7 @@ const _symbols = {
   'lambda': 'λ',
   'mu': 'μ',
   'sigma': 'σ',
+  'tau': 'τ',
   'rho': 'ρ',
   'alpha': 'α',
   'beta': 'β',
@@ -147,9 +150,21 @@ const _symbols = {
   'ne': '≠',
   'approx': '≈',
   'pm': '±',
+  'sim': '∼',
 };
 
-const _functions = {'sin', 'cos', 'tan', 'ln', 'log', 'exp', 'det', 'tr'};
+const _functions = {
+  'sin',
+  'cos',
+  'tan',
+  'ln',
+  'log',
+  'exp',
+  'det',
+  'tr',
+  'max',
+  'min',
+};
 
 /// A typed space: a hair space, so operators (which carry their own
 /// padding) never get doubled gaps.
@@ -250,6 +265,14 @@ class _Parser {
         case 'det':
           if (!done && ch == '{') return _matrix(det: name == 'det');
           return MathSym(name, upright: true);
+        case 'text':
+          // Words, kept as written with their ordinary spaces.
+          if (!done && ch == '{') {
+            final end = s.indexOf('}', i);
+            final words = s.substring(i + 1, end < 0 ? s.length : end);
+            i = end < 0 ? s.length : end + 1;
+            return MathSym(words, upright: true);
+          }
       }
       if (_symbols.containsKey(name)) return MathSym(_symbols[name]!);
       if (_functions.contains(name)) {
@@ -348,6 +371,7 @@ Widget _render(MathNode n, TextStyle style) {
               '≥' ||
               '≠' ||
               '≈' ||
+              '∼' ||
               '→' => '\u2005$text\u2005',
               _ => text,
             };
