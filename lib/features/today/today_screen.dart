@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/game/game_category.dart';
+import '../../core/game/game_definition.dart';
 import '../../core/game/game_registry.dart';
 import '../../core/skills/skill.dart';
 import '../../core/storage/progress.dart';
@@ -10,7 +12,9 @@ import '../../ui/motion.dart';
 import '../../ui/lucid.dart';
 import '../../ui/widgets/press_scale.dart';
 import '../../ui/widgets/skill_marker.dart';
+import '../../games/teaser/teaser_game.dart';
 import '../feed/feed_plan.dart';
+import '../games/games_screen.dart' show categoryColors;
 import 'daily_workout.dart';
 import '../../ui/palette.dart';
 
@@ -454,44 +458,142 @@ class _SkillsCard extends StatelessWidget {
   }
 }
 
+/// Free play, grouped like the Games tab (see "Today · Free play by group"):
+/// the Teaser of the day first as "Daily", then each group's games in a
+/// 3-wide grid of tiles in the group's colour.
 class _FreePlayGrid extends StatelessWidget {
   const _FreePlayGrid();
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+    final teaser = findGame(TeaserGame.gameId);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (teaser != null)
+          _FreePlayGroup(
+            title: 'Daily',
+            tile: p.spark,
+            icon: p.onSpark,
+            games: [teaser],
+            first: true,
+          ),
+        for (final c in GameCategory.values)
+          if (c.games.isNotEmpty)
+            Builder(
+              builder: (context) {
+                final (tile, icon) = categoryColors(context, c);
+                return _FreePlayGroup(
+                  title: c.title,
+                  tile: tile,
+                  icon: icon,
+                  games: c.games,
+                );
+              },
+            ),
+      ],
+    );
+  }
+}
+
+class _FreePlayGroup extends StatelessWidget {
+  const _FreePlayGroup({
+    required this.title,
+    required this.tile,
+    required this.icon,
+    required this.games,
+    this.first = false,
+  });
+
+  final String title;
+  final Color tile;
+
+  /// The game icons' colour (spark orange on Markets' dark tiles).
+  final Color icon;
+  final List<GameDefinition> games;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
     final d = Dims.of(context);
-    return LayoutBuilder(
-      builder: (context, c) {
-        final w = (c.maxWidth - 2 * 10) / 3;
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final g in gameRegistry)
-              PressScale(
-                semanticLabel: 'Play ${g.title}',
-                onTap: () => context.push('/game/${g.id}'),
-                child: Container(
-                  width: w,
-                  height: d.freeTile,
-                  padding: EdgeInsets.all(d.compact ? 10 : 12),
-                  decoration: BoxDecoration(
-                    color: g.skills.first.color,
-                    borderRadius: BorderRadius.circular(d.compact ? 18 : 20),
-                  ),
-                  child: Text(
-                    g.title,
-                    style: lucidText(
-                      size: d.small + 1,
-                      weight: 600,
-                      color: onFill(g.skills.first.color),
-                    ),
-                  ),
+    final name = onFill(tile);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(2, first ? 4 : d.gapL, 2, 10),
+          child: Row(
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: tile,
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ),
-          ],
-        );
-      },
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: lucidText(size: 15, weight: 600, color: p.ink),
+                ),
+              ),
+              Text(
+                '${games.length}',
+                style: lucidText(size: 13, weight: 600, color: p.muted),
+              ),
+            ],
+          ),
+        ),
+        LayoutBuilder(
+          builder: (context, c) {
+            final w = (c.maxWidth - 2 * 10) / 3;
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final g in games)
+                  PressScale(
+                    semanticLabel: 'Play ${g.title}',
+                    onTap: () => context.push('/game/${g.id}'),
+                    child: Container(
+                      width: w,
+                      height: d.freeTile,
+                      padding: EdgeInsets.all(d.compact ? 10 : 12),
+                      decoration: BoxDecoration(
+                        color: tile,
+                        borderRadius: BorderRadius.circular(
+                          d.compact ? 18 : 20,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(g.icon, size: d.compact ? 18 : 20, color: icon),
+                          Text(
+                            g.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: lucidText(
+                              size: d.small + 1,
+                              weight: 600,
+                              color: name,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
