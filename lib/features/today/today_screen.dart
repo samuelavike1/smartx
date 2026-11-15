@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/game/game_category.dart';
-import '../../core/game/game_definition.dart';
-import '../../core/game/game_registry.dart';
 import '../../core/skills/skill.dart';
 import '../../core/storage/progress.dart';
 import '../../ui/density.dart';
@@ -458,136 +456,113 @@ class _SkillsCard extends StatelessWidget {
   }
 }
 
-/// Free play, grouped like the Games tab (see "Today · Free play by group"):
-/// the Teaser of the day first as "Daily", then each group's games in a
-/// 3-wide grid of tiles in the group's colour.
-class _FreePlayGrid extends StatelessWidget {
+/// Free play as group cards (see "Today · Free play as group cards"): the
+/// Teaser of the day as one wide card, then a card per group, two across.
+/// A group opens its game list inside the Today tab.
+class _FreePlayGrid extends ConsumerWidget {
   const _FreePlayGrid();
 
   @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final teaser = findGame(TeaserGame.gameId);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (teaser != null)
-          _FreePlayGroup(
-            title: 'Daily',
-            tile: p.spark,
-            icon: p.onSpark,
-            games: [teaser],
-            first: true,
-          ),
-        for (final c in GameCategory.values)
-          if (c.games.isNotEmpty)
-            Builder(
-              builder: (context) {
-                final (tile, icon) = categoryColors(context, c);
-                return _FreePlayGroup(
-                  title: c.title,
-                  tile: tile,
-                  icon: icon,
-                  games: c.games,
-                );
-              },
-            ),
-      ],
-    );
-  }
-}
-
-class _FreePlayGroup extends StatelessWidget {
-  const _FreePlayGroup({
-    required this.title,
-    required this.tile,
-    required this.icon,
-    required this.games,
-    this.first = false,
-  });
-
-  final String title;
-  final Color tile;
-
-  /// The game icons' colour (spark orange on Markets' dark tiles).
-  final Color icon;
-  final List<GameDefinition> games;
-  final bool first;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final p = context.palette;
     final d = Dims.of(context);
-    final name = onFill(tile);
+    final progress = ref.watch(progressProvider);
+    final groups = [
+      for (final c in GameCategory.values)
+        if (c.games.isNotEmpty) c,
+    ];
+    final radius = BorderRadius.circular(d.compact ? 18 : 22);
+    final pad = EdgeInsets.all(d.compact ? 12 : 14);
+
+    Widget label(String title, String sub, Color fg) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: lucidText(size: 15, weight: 600, color: fg, height: 1.2),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          sub,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: lucidText(size: 12, color: fg.withValues(alpha: 0.85)),
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(2, first ? 4 : d.gapL, 2, 10),
-          child: Row(
-            children: [
-              Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: tile,
-                  borderRadius: BorderRadius.circular(6),
+        PressScale(
+          semanticLabel: 'Play Teaser of the day',
+          onTap: () => context.push('/game/${TeaserGame.gameId}'),
+          child: Container(
+            height: d.compact ? 68 : 76,
+            padding: pad,
+            decoration: BoxDecoration(color: p.spark, borderRadius: radius),
+            child: Row(
+              children: [
+                Icon(Icons.lightbulb_outline_rounded, color: p.onSpark),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: label(
+                    'Teaser of the day',
+                    'One classic puzzle, new each day',
+                    p.onSpark,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: lucidText(size: 15, weight: 600, color: p.ink),
-                ),
-              ),
-              Text(
-                '${games.length}',
-                style: lucidText(size: 13, weight: 600, color: p.muted),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+        const SizedBox(height: 10),
         LayoutBuilder(
-          builder: (context, c) {
-            final w = (c.maxWidth - 2 * 10) / 3;
+          builder: (context, box) {
+            final w = (box.maxWidth - 10) / 2;
             return Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
-                for (final g in games)
-                  PressScale(
-                    semanticLabel: 'Play ${g.title}',
-                    onTap: () => context.push('/game/${g.id}'),
-                    child: Container(
-                      width: w,
-                      height: d.freeTile,
-                      padding: EdgeInsets.all(d.compact ? 10 : 12),
-                      decoration: BoxDecoration(
-                        color: tile,
-                        borderRadius: BorderRadius.circular(
-                          d.compact ? 18 : 20,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(g.icon, size: d.compact ? 18 : 20, color: icon),
-                          Text(
-                            g.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: lucidText(
-                              size: d.small + 1,
-                              weight: 600,
-                              color: name,
-                              height: 1.2,
-                            ),
+                for (final c in groups)
+                  Builder(
+                    builder: (context) {
+                      final (tile, icon) = categoryColors(context, c);
+                      final fg = onFill(tile);
+                      final played = c.games
+                          .where((g) => progress.forGame(g.id).sessions > 0)
+                          .length;
+                      final count = c.games.length;
+                      return PressScale(
+                        semanticLabel: 'Open ${c.title}',
+                        onTap: () => context.push('/today/group/${c.name}'),
+                        child: Container(
+                          width: w,
+                          height: d.compact ? 104 : 118,
+                          padding: pad,
+                          decoration: BoxDecoration(
+                            color: tile,
+                            borderRadius: radius,
                           ),
-                        ],
-                      ),
-                    ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Icon(c.icon, color: icon, size: 24),
+                              label(
+                                c.title,
+                                '$count ${count == 1 ? 'game' : 'games'} · '
+                                '${played == 0 ? 'New' : '$played played'}',
+                                fg,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
               ],
             );

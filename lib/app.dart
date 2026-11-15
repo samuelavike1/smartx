@@ -18,6 +18,17 @@ import 'ui/motion.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/how_to_play.dart';
 
+/// A group's games, from the Games tab or from Free play on Today.
+Page<void> _groupPage(BuildContext _, GoRouterState state) {
+  final group = GameCategory.byName(state.pathParameters['group']!);
+  return slidePage(
+    state,
+    group == null
+        ? const Center(child: Text('Group not found'))
+        : GroupScreen(category: group),
+  );
+}
+
 GoRouter buildRouter() => GoRouter(
   initialLocation: '/today',
   routes: [
@@ -29,7 +40,15 @@ GoRouter buildRouter() => GoRouter(
       branches: [
         StatefulShellBranch(
           routes: [
-            GoRoute(path: '/today', builder: (_, _) => const TodayScreen()),
+            GoRoute(
+              path: '/today',
+              builder: (_, _) => const TodayScreen(),
+              routes: [
+                // A group opened from Free play; the tab bar stays and Back
+                // returns to Today.
+                GoRoute(path: 'group/:group', pageBuilder: _groupPage),
+              ],
+            ),
           ],
         ),
         StatefulShellBranch(
@@ -39,20 +58,7 @@ GoRouter buildRouter() => GoRouter(
               builder: (_, _) => const GamesScreen(),
               routes: [
                 // A group's games; the tab bar stays.
-                GoRoute(
-                  path: ':group',
-                  pageBuilder: (_, state) {
-                    final group = GameCategory.byName(
-                      state.pathParameters['group']!,
-                    );
-                    return slidePage(
-                      state,
-                      group == null
-                          ? const Center(child: Text('Group not found'))
-                          : GroupScreen(category: group),
-                    );
-                  },
-                ),
+                GoRoute(path: ':group', pageBuilder: _groupPage),
               ],
             ),
           ],
