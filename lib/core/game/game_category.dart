@@ -23,7 +23,14 @@ enum GameCategory {
     'Numbers & Odds',
     'Quick sums, counting, probability',
     Icons.casino_rounded,
-    ['mental_math', 'count_it', 'odds_on', 'expect_it', 'coin_race'],
+    [
+      'mental_math',
+      'count_it',
+      'odds_on',
+      'expect_it',
+      'coin_race',
+      'random_walk',
+    ],
   ),
   decisions(
     'Decisions',

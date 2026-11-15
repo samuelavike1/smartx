@@ -19,6 +19,7 @@ import 'package:smartx/games/coin_race/coin_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/odds_on/odds_math.dart';
 import 'package:smartx/games/expect_it/expect_controller.dart';
+import 'package:smartx/games/random_walk/walk_controller.dart';
 import 'package:smartx/games/options_desk/desk_controller.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
 import 'package:smartx/games/teaser/teaser_book.dart';
@@ -1256,6 +1257,70 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(next);
     await tester.pumpAndSettle();
+  }
+
+  Future<void> answerWalk(WidgetTester tester, {required bool right}) async {
+    final q = container.read(walkSessionProvider).question;
+    final i = right ? q.answerIndex : (q.answerIndex + 1) % 4;
+    await tapKey(tester, 'walk-$i');
+    expect(find.text('Working it out'), findsOneWidget);
+    expect(find.text('One possible walk'), findsOneWidget);
+    expect(find.text(q.feedbackFor(q.options[i])), findsOneWidget);
+    final next = find.byType(FilledButton);
+    await tester.ensureVisible(next);
+    await tester.pumpAndSettle();
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a full Random Walk session: every answer right', (tester) async {
+    await pumpApp(tester);
+    await openFromGames(tester, 'Random Walk');
+    await tester.pump();
+    await tester.pumpAndSettle();
+    for (var r = 0; r < WalkController.totalRounds; r++) {
+      await answerWalk(tester, right: true);
+    }
+    expect(find.text('8 of 8 correct · new personal best'), findsOneWidget);
+    final progress = container.read(progressProvider);
+    expect(progress.xpFor(Skill.numbers), 80);
+    expect(progress.xpFor(Skill.problemSolving), 40);
+  });
+
+  for (final level in [1, 4, 6, 7, 8, 9, 10]) {
+    testWidgets('Random Walk at level $level fits a 360×640 phone', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(720, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues(
+        rulesSeen({'game.random_walk.level': level}),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [
+          progressRepositoryProvider.overrideWithValue(
+            ProgressRepository(prefs),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const SmartXApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openFromGames(tester, 'Random Walk');
+      await tester.pump();
+      await tester.pumpAndSettle();
+      // Wrong picks show the longest review; any overflow fails the test.
+      for (var r = 0; r < 4; r++) {
+        await answerWalk(tester, right: false);
+      }
+    });
   }
 
   testWidgets('a full Expect It session: every answer right', (tester) async {
