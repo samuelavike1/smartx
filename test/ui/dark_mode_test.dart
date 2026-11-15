@@ -14,6 +14,7 @@ import 'package:smartx/games/count_it/count_controller.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/games/ink_clash/ink_puzzle.dart';
 import 'package:smartx/games/odds_on/odds_controller.dart';
+import 'package:smartx/games/expect_it/expect_controller.dart';
 import 'package:smartx/games/options_desk/desk_controller.dart';
 import 'package:smartx/games/scale_sleuth/scale_controller.dart';
 import 'package:smartx/games/teaser/teaser_controller.dart';
@@ -316,6 +317,26 @@ void main() {
       }
     });
   }
+  for (final level in [1, 5, 8, 10]) {
+    testWidgets('Expect It at level $level and its reviews are dark', (
+      tester,
+    ) async {
+      await pumpDark(tester, {'game.expect_it.level': level});
+      await openGame(tester, 'Expect It');
+      await tester.pumpAndSettle();
+      final c = container.read(expSessionProvider.notifier);
+      for (var r = 0; r < 3; r++) {
+        expectNoDayColours(tester, 'Expect It question');
+        final q = container.read(expSessionProvider).question;
+        c.select(r.isEven ? q.answerIndex : (q.answerIndex + 1) % 4);
+        await tester.pumpAndSettle();
+        expectNoDayColours(tester, 'Expect It review');
+        await c.next();
+        await tester.pumpAndSettle();
+      }
+    });
+  }
+
   testWidgets('an Ink Clash block and its review are dark', (tester) async {
     await pumpDark(tester);
     await openGame(tester, 'Ink Clash');
