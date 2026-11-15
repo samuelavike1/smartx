@@ -42,7 +42,7 @@ enum GameCategory {
     'Markets',
     'Options, prices and the Greeks',
     Icons.candlestick_chart_rounded,
-    ['options_desk'],
+    ['options_desk', 'bond_desk'],
   );
 
   const GameCategory(this.title, this.blurb, this.icon, this.gameIds);
