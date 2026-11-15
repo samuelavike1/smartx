@@ -30,6 +30,7 @@ enum GameCategory {
       'expect_it',
       'coin_race',
       'random_walk',
+      'spread_bell',
     ],
   ),
   decisions(

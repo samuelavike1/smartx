@@ -19,6 +19,7 @@ import '../../games/pattern_sequence/pattern_sequence_game.dart';
 import '../../games/random_walk/random_walk_game.dart';
 import '../../games/risk_desk/risk_desk_game.dart';
 import '../../games/scale_sleuth/scale_sleuth_game.dart';
+import '../../games/spread_bell/spread_bell_game.dart';
 import '../../games/stop_or_roll/stop_or_roll_game.dart';
 import '../../games/teaser/teaser_game.dart';
 import 'game_definition.dart';
@@ -48,6 +49,7 @@ const List<GameDefinition> gameRegistry = [
   EggDropGame(),
   BondDeskGame(),
   RiskDeskGame(),
+  SpreadBellGame(),
 ];
 
 GameDefinition? findGame(String id) {
