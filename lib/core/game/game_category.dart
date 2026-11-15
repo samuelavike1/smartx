@@ -40,9 +40,9 @@ enum GameCategory {
   ),
   markets(
     'Markets',
-    'Options, prices and the Greeks',
+    'Options, bonds and portfolio risk',
     Icons.candlestick_chart_rounded,
-    ['options_desk', 'bond_desk'],
+    ['options_desk', 'bond_desk', 'risk_desk'],
   );
 
   const GameCategory(this.title, this.blurb, this.icon, this.gameIds);
