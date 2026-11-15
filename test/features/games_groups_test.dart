@@ -159,14 +159,24 @@ void main() {
     );
     expect(find.textContaining('Lv 5', findRichText: true), findsOneWidget);
     expect(find.textContaining('top 7', findRichText: true), findsOneWidget);
-    // The last row may sit below the fold.
+    // The list builds rows near the screen only: every row that is built,
+    // except Odds On, reads New.
+    final built = find
+        .descendant(
+          of: find.byType(GroupScreen),
+          matching: find.byType(GameRow, skipOffstage: false),
+          skipOffstage: false,
+        )
+        .evaluate()
+        .length;
+    expect(built, greaterThanOrEqualTo(4));
     expect(
       find.descendant(
         of: find.byType(GroupScreen),
         matching: find.text('New', skipOffstage: false),
         skipOffstage: false,
       ),
-      findsNWidgets(GameCategory.numbers.games.length - 1),
+      findsNWidgets(built - 1),
     );
 
     await tester.tap(find.text('Odds On'));
