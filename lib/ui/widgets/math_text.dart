@@ -252,7 +252,15 @@ class _Parser {
           return MathSym(name, upright: true);
       }
       if (_symbols.containsKey(name)) return MathSym(_symbols[name]!);
-      if (_functions.contains(name)) return MathSym(name, upright: true);
+      if (_functions.contains(name)) {
+        // "\sin x": the space after a function name is a real thin space,
+        // not the hair space typed spaces get elsewhere.
+        if (!done && ch == ' ') {
+          i++;
+          return MathRow([MathSym(name, upright: true), const MathSym(' ')]);
+        }
+        return MathSym(name, upright: true);
+      }
       return MathSym('\\$name');
     }
     i++;
@@ -299,7 +307,7 @@ String _plain(MathNode n) {
 
   return switch (n) {
     MathRow(:final children) => children.map(_plain).join(),
-    MathSym(:final text) => text == _space ? ' ' : text,
+    MathSym(:final text) => text == _space || text == ' ' ? ' ' : text,
     MathFrac(:final top, :final bottom) => '${wrap(top)}/${wrap(bottom)}',
     MathScript(:final base, :final sup, :final sub) =>
       '${_plain(base)}${sub == null ? '' : '_${wrap(sub)}'}'
