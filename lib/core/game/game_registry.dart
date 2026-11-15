@@ -1,3 +1,4 @@
+import '../../games/algo_sense/algo_sense_game.dart';
 import '../../games/arrow_focus/arrow_focus_game.dart';
 import '../../games/best_run/best_run_game.dart';
 import '../../games/bond_desk/bond_desk_game.dart';
@@ -58,6 +59,7 @@ const List<GameDefinition> gameRegistry = [
   CalcSprintGame(),
   VolLabGame(),
   BrownianPathGame(),
+  AlgoSenseGame(),
 ];
 
 GameDefinition? findGame(String id) {

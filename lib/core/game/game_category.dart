@@ -17,7 +17,7 @@ enum GameCategory {
     'Logic & Puzzles',
     'Rules, clues and patterns',
     Icons.extension_rounded,
-    ['pattern_sequence', 'deduce', 'path_finder', 'scale_sleuth'],
+    ['pattern_sequence', 'deduce', 'path_finder', 'scale_sleuth', 'algo_sense'],
   ),
   numbers(
     'Numbers & Odds',
