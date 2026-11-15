@@ -8,7 +8,6 @@ import 'package:smartx/app.dart';
 import 'package:smartx/core/game/speed_game.dart';
 import 'package:smartx/core/skills/skill.dart';
 import 'package:smartx/core/storage/progress.dart';
-import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/arrow_focus/arrow_controller.dart';
 import 'package:smartx/games/arrow_focus/arrow_puzzle.dart';
 import 'package:smartx/games/better_bet/bet_controller.dart';
@@ -36,6 +35,7 @@ import 'package:smartx/games/path_finder/path_puzzle.dart';
 import 'package:smartx/games/pattern_sequence/pattern_sequence_controller.dart';
 import 'package:smartx/ui/widgets/glass_nav_bar.dart';
 
+import 'open_game.dart';
 import 'test_prefs.dart';
 
 void main() {
@@ -116,9 +116,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Grid Recall'));
+    await openFromGames(tester, 'Grid Recall');
     await tester.pumpAndSettle();
     expect(find.text('Watch the cells'), findsOneWidget);
 
@@ -159,9 +157,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Deduce'));
+    await openFromGames(tester, 'Deduce');
     await tester.pumpAndSettle();
     expect(find.text('Who goes where?'), findsOneWidget);
 
@@ -208,12 +204,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Path Finder');
-    await tester.ensureVisible(card);
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Path Finder');
     await tester.pumpAndSettle();
     expect(find.text('Reach the flag'), findsOneWidget);
 
@@ -250,12 +241,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Echo Back');
-    await tester.ensureVisible(card);
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Echo Back');
     // The pushed route builds on the next frame.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -296,20 +282,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    // The Games list builds cards lazily: scroll until this one exists.
-    final card = find.text('Ink Clash');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Ink Clash');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Get ready…'), findsOneWidget);
@@ -346,19 +319,7 @@ void main() {
 
   Future<void> openArrowFocus(WidgetTester tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Arrow Focus');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Arrow Focus');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Get ready…'), findsOneWidget);
@@ -424,19 +385,7 @@ void main() {
 
   Future<void> openOddOneOut(WidgetTester tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Odd One Out');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Odd One Out');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Get ready…'), findsOneWidget);
@@ -513,19 +462,7 @@ void main() {
 
   Future<void> openOddsOn(WidgetTester tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Odds On');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Odds On');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -594,19 +531,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     // Open it the way a player would, with the app's compact theme.
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Odds On');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Odds On');
     await tester.pump();
     await tester.pumpAndSettle();
     expect(container.read(oddsSessionProvider).question.level, 9);
@@ -633,19 +558,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Mental Math');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Mental Math');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     for (var block = 0; block < SpeedController.totalRounds; block++) {
@@ -682,19 +595,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text('Better Bet');
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, 'Better Bet');
     await tester.pump();
     await tester.pumpAndSettle();
     for (var r = 0; r < BetController.totalRounds; r++) {
@@ -743,18 +644,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Games').last);
-      await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.text('Better Bet'),
-        200,
-        scrollable: find.descendant(
-          of: find.byType(GamesScreen),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Better Bet'));
+      await openFromGames(tester, 'Better Bet');
       await tester.pump();
       await tester.pumpAndSettle();
       // Wrong picks show the longest review; any overflow fails the test.
@@ -800,18 +690,7 @@ void main() {
   }
 
   Future<void> openScaleSleuth(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Scale Sleuth'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Scale Sleuth'));
+    await openFromGames(tester, 'Scale Sleuth');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -912,18 +791,7 @@ void main() {
   }
 
   Future<void> openStopOrRoll(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Stop or Roll'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop or Roll'));
+    await openFromGames(tester, 'Stop or Roll');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -994,18 +862,7 @@ void main() {
   }
 
   Future<void> openCountIt(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Count It'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Count It'));
+    await openFromGames(tester, 'Count It');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -1070,18 +927,7 @@ void main() {
   }
 
   Future<void> openBestRun(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Best Run'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Best Run'));
+    await openFromGames(tester, 'Best Run');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -1160,18 +1006,7 @@ void main() {
   }
 
   Future<void> openCoinRace(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Coin Race'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Coin Race'));
+    await openFromGames(tester, 'Coin Race');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -1234,18 +1069,7 @@ void main() {
     });
   }
   Future<void> openTeaser(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Teaser of the day'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Teaser of the day'));
+    await openFromGames(tester, 'Teaser of the day');
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -1253,14 +1077,35 @@ void main() {
   testWidgets('Teaser of the day: a hint, the answer, then a bonus teaser', (
     tester,
   ) async {
-    TeaserController.today = DateTime(2026, 11, 14, 9);
+    // Today for real: the finished session is saved under the real date,
+    // and the bonus teaser is decided by that.
+    final now = DateTime.now();
+    TeaserController.today = now;
     addTearDown(() => TeaserController.today = null);
     await pumpApp(tester);
     await openTeaser(tester);
-    final daily = TeaserBook.forDay(DateTime(2026, 11, 14));
-    expect(find.text(daily.title), findsOneWidget);
+    final daily = TeaserBook.forDay(now);
+    expect(find.text(daily.title), findsWidgets);
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     expect(
-      find.textContaining('Teaser of the day · Sat 14 Nov'),
+      find.textContaining(
+        'Teaser of the day · ${days[now.weekday - 1]} ${now.day} '
+        '${months[now.month - 1]}',
+      ),
       findsOneWidget,
     );
     await tapKey(tester, 'teaser-hint');
@@ -1334,18 +1179,7 @@ void main() {
     expect(seen, hasLength(TeaserBook.order.length));
   });
   Future<void> openDesk(WidgetTester tester) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Options Desk'),
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Options Desk'));
+    await openFromGames(tester, 'Options Desk');
     await tester.pump();
     await tester.pumpAndSettle();
   }

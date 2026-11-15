@@ -6,10 +6,10 @@ import 'package:smartx/app.dart';
 import 'package:smartx/core/game/game_registry.dart';
 import 'package:smartx/core/game/speed_game.dart';
 import 'package:smartx/core/storage/progress.dart';
-import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/ink_clash/ink_controller.dart';
 import 'package:smartx/ui/widgets/how_to_play.dart';
 
+import '../open_game.dart';
 import '../test_prefs.dart';
 import 'dark_mode_test.dart' show dayColours;
 
@@ -36,19 +36,7 @@ void main() {
   }
 
   Future<void> openGame(WidgetTester tester, String title) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text(title);
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, title);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
   }

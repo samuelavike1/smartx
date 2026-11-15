@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'core/game/game_category.dart';
 import 'core/game/game_registry.dart';
 import 'core/storage/appearance.dart';
 import 'features/feed/feed_screen.dart';
 import 'features/games/games_screen.dart';
+import 'features/games/group_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/skills/skills_screen.dart';
@@ -32,7 +34,27 @@ GoRouter buildRouter() => GoRouter(
         ),
         StatefulShellBranch(
           routes: [
-            GoRoute(path: '/games', builder: (_, _) => const GamesScreen()),
+            GoRoute(
+              path: '/games',
+              builder: (_, _) => const GamesScreen(),
+              routes: [
+                // A group's games; the tab bar stays.
+                GoRoute(
+                  path: ':group',
+                  pageBuilder: (_, state) {
+                    final group = GameCategory.byName(
+                      state.pathParameters['group']!,
+                    );
+                    return slidePage(
+                      state,
+                      group == null
+                          ? const Center(child: Text('Group not found'))
+                          : GroupScreen(category: group),
+                    );
+                  },
+                ),
+              ],
+            ),
           ],
         ),
         StatefulShellBranch(

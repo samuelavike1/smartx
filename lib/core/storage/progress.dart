@@ -16,13 +16,18 @@ String dayKey(DateTime d) =>
 class GameProgress {
   const GameProgress({
     this.level = 1,
+    int? peakLevel,
     this.bestScore = 0,
     this.sessions = 0,
     this.lastPlayedDay,
     this.lastScore = 0,
-  });
+  }) : peakLevel = peakLevel ?? level;
 
+  /// The level the next session starts at.
   final int level;
+
+  /// The highest level ever reached. Starting over keeps it.
+  final int peakLevel;
   final int bestScore;
   final int sessions;
 
@@ -33,6 +38,10 @@ class GameProgress {
   final int lastScore;
 
   bool playedOn(DateTime day) => lastPlayedDay == dayKey(day);
+
+  /// Levels counted toward a group's progress: the highest level reached,
+  /// or none for a game never played.
+  int get levelsReached => sessions == 0 ? 0 : peakLevel;
 }
 
 @immutable
@@ -59,6 +68,11 @@ class ProgressRepository {
         for (final id in gameIds)
           id: GameProgress(
             level: _prefs.getInt('game.$id.level') ?? 1,
+            // Saved since groups came in; before that, the level is the peak.
+            peakLevel: max(
+              _prefs.getInt('game.$id.peak') ?? 1,
+              _prefs.getInt('game.$id.level') ?? 1,
+            ),
             bestScore: _prefs.getInt('game.$id.best') ?? 0,
             sessions: _prefs.getInt('game.$id.sessions') ?? 0,
             lastPlayedDay: _prefs.getString('game.$id.lastDay'),
@@ -74,6 +88,7 @@ class ProgressRepository {
 
   Future<void> saveGame(String id, GameProgress p) async {
     await _prefs.setInt('game.$id.level', p.level);
+    await _prefs.setInt('game.$id.peak', p.peakLevel);
     await _prefs.setInt('game.$id.best', p.bestScore);
     await _prefs.setInt('game.$id.sessions', p.sessions);
     await _prefs.setInt('game.$id.lastScore', p.lastScore);
@@ -124,6 +139,7 @@ class ProgressNotifier extends Notifier<ProgressSnapshot> {
     final previous = state.forGame(result.gameId);
     final updatedGame = GameProgress(
       level: result.endLevel,
+      peakLevel: max(previous.peakLevel, result.endLevel),
       bestScore: max(previous.bestScore, result.score),
       sessions: previous.sessions + 1,
       lastPlayedDay: dayKey(DateTime.now()),
@@ -143,6 +159,25 @@ class ProgressNotifier extends Notifier<ProgressSnapshot> {
     for (final skill in result.skills) {
       await repo.saveSkillXp(skill, updatedXp[skill]!);
     }
+  }
+
+  /// Start over: the next session of [gameId] is at level 1. Best score,
+  /// sessions, highest level and XP all stay.
+  Future<void> startOver(String gameId) async {
+    final p = state.forGame(gameId);
+    final updated = GameProgress(
+      level: 1,
+      peakLevel: p.peakLevel,
+      bestScore: p.bestScore,
+      sessions: p.sessions,
+      lastPlayedDay: p.lastPlayedDay,
+      lastScore: p.lastScore,
+    );
+    state = ProgressSnapshot(
+      games: {...state.games, gameId: updated},
+      skillXp: state.skillXp,
+    );
+    await ref.read(progressRepositoryProvider).saveGame(gameId, updated);
   }
 
   /// Adds XP earned outside a game session (the Quick feed). Game levels,

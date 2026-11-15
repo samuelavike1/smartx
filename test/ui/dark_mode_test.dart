@@ -8,7 +8,6 @@ import 'package:smartx/core/game/speed_game.dart';
 import 'package:smartx/core/storage/progress.dart';
 import 'package:smartx/features/feed/feed_controller.dart';
 import 'package:smartx/features/feed/feed_plan.dart';
-import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/games/best_run/run_controller.dart';
 import 'package:smartx/games/coin_race/coin_controller.dart';
 import 'package:smartx/games/count_it/count_controller.dart';
@@ -20,6 +19,7 @@ import 'package:smartx/games/scale_sleuth/scale_controller.dart';
 import 'package:smartx/games/teaser/teaser_controller.dart';
 import 'package:smartx/games/stop_or_roll/stop_controller.dart';
 
+import '../open_game.dart';
 import '../test_prefs.dart';
 
 /// Fills and borders that only belong to light mode. If one shows up in
@@ -87,19 +87,7 @@ void main() {
   }
 
   Future<void> openGame(WidgetTester tester, String title) async {
-    await tester.tap(find.text('Games').last);
-    await tester.pumpAndSettle();
-    final card = find.text(title);
-    await tester.scrollUntilVisible(
-      card,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(GamesScreen),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(card);
+    await openFromGames(tester, title);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
   }

@@ -5,13 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartx/app.dart';
+import 'package:smartx/core/game/game_category.dart';
 import 'package:smartx/core/game/game_registry.dart';
 import 'package:smartx/core/skills/skill.dart';
 import 'package:smartx/core/storage/progress.dart';
-import 'package:smartx/features/games/games_screen.dart';
 import 'package:smartx/ui/lucid.dart';
 import 'package:smartx/ui/palette.dart';
 
+import '../open_game.dart';
 import 'dark_mode_test.dart' show dayColours;
 
 double _contrast(Color a, Color b) {
@@ -83,19 +84,10 @@ void main() {
       await tester.scrollUntilVisible(find.text('40 XP'), 200);
       expect(find.text('Numbers'), findsOneWidget);
 
-      // The Odds On card shows its new skill.
-      await tester.tap(find.text('Games').last);
-      await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.text('Odds On'),
-        200,
-        scrollable: find.descendant(
-          of: find.byType(GamesScreen),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Numbers'), findsWidgets);
+      // Odds On is listed under Numbers & Odds.
+      await openGroup(tester, GameCategory.numbers);
+      expect(find.text('Odds On'), findsOneWidget);
+      if (dark) expect(dayColours(tester), isEmpty);
     });
   }
 }
