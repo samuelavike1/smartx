@@ -36,7 +36,7 @@ enum GameCategory {
     'Decisions',
     'Bets, stopping and timing',
     Icons.call_split_rounded,
-    ['better_bet', 'stop_or_roll', 'best_run'],
+    ['better_bet', 'stop_or_roll', 'best_run', 'egg_drop'],
   ),
   markets(
     'Markets',

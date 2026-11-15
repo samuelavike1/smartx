@@ -5,6 +5,7 @@ import '../../games/coin_race/coin_race_game.dart';
 import '../../games/count_it/count_it_game.dart';
 import '../../games/deduce/deduce_game.dart';
 import '../../games/echo_back/echo_back_game.dart';
+import '../../games/egg_drop/egg_drop_game.dart';
 import '../../games/expect_it/expect_it_game.dart';
 import '../../games/grid_recall/grid_recall_game.dart';
 import '../../games/ink_clash/ink_clash_game.dart';
@@ -42,6 +43,7 @@ const List<GameDefinition> gameRegistry = [
   OptionsDeskGame(),
   ExpectItGame(),
   RandomWalkGame(),
+  EggDropGame(),
 ];
 
 GameDefinition? findGame(String id) {
