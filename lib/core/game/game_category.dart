@@ -37,7 +37,7 @@ enum GameCategory {
     'Calculus & Matrices',
     'Derivatives, integrals and matrices',
     Icons.show_chart_rounded,
-    [],
+    ['matrix_sense'],
   ),
   decisions(
     'Decisions',

@@ -10,6 +10,7 @@ import '../../games/egg_drop/egg_drop_game.dart';
 import '../../games/expect_it/expect_it_game.dart';
 import '../../games/grid_recall/grid_recall_game.dart';
 import '../../games/ink_clash/ink_clash_game.dart';
+import '../../games/matrix_sense/matrix_sense_game.dart';
 import '../../games/mental_math/mental_math_game.dart';
 import '../../games/odd_one_out/odd_one_out_game.dart';
 import '../../games/odds_on/odds_on_game.dart';
@@ -50,6 +51,7 @@ const List<GameDefinition> gameRegistry = [
   BondDeskGame(),
   RiskDeskGame(),
   SpreadBellGame(),
+  MatrixSenseGame(),
 ];
 
 GameDefinition? findGame(String id) {

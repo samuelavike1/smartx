@@ -68,12 +68,32 @@ class MathRow extends MathNode {
 }
 
 class MathSym extends MathNode {
-  const MathSym(this.text, {this.upright = false});
+  const MathSym(this.text, {this.upright = false, this.unary = false});
   final String text;
 
   /// Function names and digits; letters are otherwise the same font.
   final bool upright;
+
+  /// A sign rather than an operator ("−3", "= −x"): no space around it.
+  final bool unary;
 }
+
+/// Symbols after which a minus is a sign, not a subtraction.
+const _operators = {
+  '=',
+  '+',
+  '−',
+  '×',
+  '÷',
+  '·',
+  '≤',
+  '≥',
+  '≠',
+  '≈',
+  '→',
+  '±',
+  '(',
+};
 
 class MathFrac extends MathNode {
   const MathFrac(this.top, this.bottom);
@@ -155,6 +175,16 @@ class _Parser {
       if (stops.contains(ch)) break;
       var node = _atom();
       if (node == null) continue;
+      // A minus with nothing before it (or only an operator) is a sign.
+      if (node is MathSym && node.text == '−') {
+        final before = out.lastWhere(
+          (n) => !(n is MathSym && n.text == _space),
+          orElse: () => const MathSym('='),
+        );
+        if (before is MathSym && _operators.contains(before.text)) {
+          node = const MathSym('−', unary: true);
+        }
+      }
       // Scripts attach to the atom just read.
       MathNode? sup, sub;
       while (!done && (ch == '^' || ch == '_')) {
@@ -297,20 +327,22 @@ Widget _render(MathNode n, TextStyle style) {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [for (final c in children) _render(c, style)],
       );
-    case MathSym(:final text):
-      final padded = switch (text) {
-        '=' ||
-        '+' ||
-        '−' ||
-        '×' ||
-        '÷' ||
-        '≤' ||
-        '≥' ||
-        '≠' ||
-        '≈' ||
-        '→' => '\u2005$text\u2005',
-        _ => text,
-      };
+    case MathSym(:final text, :final unary):
+      final padded = unary
+          ? text
+          : switch (text) {
+              '=' ||
+              '+' ||
+              '−' ||
+              '×' ||
+              '÷' ||
+              '≤' ||
+              '≥' ||
+              '≠' ||
+              '≈' ||
+              '→' => '\u2005$text\u2005',
+              _ => text,
+            };
       return Text(padded, style: style);
     case MathFrac(:final top, :final bottom):
       final small = scaled(0.82);

@@ -17,6 +17,36 @@ void main() {
     expect(mathPlain(r'\sin x'), 'sin x');
   });
 
+  testWidgets('a leading minus is a sign; between terms, an operator', (
+    tester,
+  ) async {
+    Future<void> show(String s) =>
+        tester.pumpWidget(MaterialApp(home: Scaffold(body: MathText(s))));
+    const binary = ' − ';
+    // Signs: at the start of a row or matrix cell, after = or (, in a power.
+    for (final s in [
+      '-3',
+      r'\mat{-1,2;3,-4}',
+      r'x = -2',
+      r'A^{-1}',
+      r'(-x)',
+      r'-\frac{2}{3}',
+    ]) {
+      await show(s);
+      expect(find.text('−'), findsWidgets, reason: s);
+      expect(find.text(binary), findsNothing, reason: s);
+    }
+    // Operators: between two terms.
+    for (final s in ['a - b', '2c_1 - c_2', 'ad - bc']) {
+      await show(s);
+      expect(find.text(binary), findsOneWidget, reason: s);
+      expect(find.text('−'), findsNothing, reason: s);
+    }
+    // Screen readers read it the same either way.
+    expect(mathPlain(r'\mat{-1,2;3,-4}'), '[−1, 2; 3, −4]');
+    expect(mathPlain('a - b'), 'a − b');
+  });
+
   test('unknown commands stay visible', () {
     expect(mathPlain(r'\foo x'), r'\foo x');
   });
