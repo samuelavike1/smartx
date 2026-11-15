@@ -24,6 +24,7 @@ import '../../games/scale_sleuth/scale_sleuth_game.dart';
 import '../../games/spread_bell/spread_bell_game.dart';
 import '../../games/stop_or_roll/stop_or_roll_game.dart';
 import '../../games/teaser/teaser_game.dart';
+import '../../games/vol_lab/vol_lab_game.dart';
 import 'game_definition.dart';
 
 /// All games available in the app, in display order.
@@ -54,6 +55,7 @@ const List<GameDefinition> gameRegistry = [
   SpreadBellGame(),
   MatrixSenseGame(),
   CalcSprintGame(),
+  VolLabGame(),
 ];
 
 GameDefinition? findGame(String id) {
