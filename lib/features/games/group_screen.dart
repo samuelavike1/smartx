@@ -140,7 +140,7 @@ class GroupScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: FractionallySizedBox(
-                        widthFactor: reached / total,
+                        widthFactor: total == 0 ? 0 : reached / total,
                         child: Container(
                           decoration: BoxDecoration(
                             // Markets' dark tile would vanish on black.

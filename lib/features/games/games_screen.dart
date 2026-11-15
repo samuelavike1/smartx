@@ -178,7 +178,7 @@ class CategoryCard extends StatelessWidget {
       0,
       (sum, g) => sum + progress.forGame(g.id).levelsReached,
     );
-    final fill = levels / (games.length * 10);
+    final fill = games.isEmpty ? 0.0 : levels / (games.length * 10);
     final (tile, icon) = categoryColors(context, category);
 
     return PressScale(

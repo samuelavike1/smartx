@@ -33,6 +33,12 @@ enum GameCategory {
       'spread_bell',
     ],
   ),
+  maths(
+    'Calculus & Matrices',
+    'Derivatives, integrals and matrices',
+    Icons.show_chart_rounded,
+    [],
+  ),
   decisions(
     'Decisions',
     'Bets, stopping and timing',
@@ -59,6 +65,8 @@ enum GameCategory {
     focusMemory => Skill.memory.color,
     logic => Skill.logic.color,
     numbers => Skill.numbers.color,
+    // The one skill colour no other group uses.
+    maths => Skill.patternRecognition.color,
     decisions => Skill.problemSolving.color,
     markets => null,
   };
