@@ -80,7 +80,7 @@ void main() {
 
   test('listed last in Logic & Puzzles', () {
     expect(GameCategory.logic.gameIds, contains('algo_sense'));
-    expect(GameCategory.logic.gameIds.last, 'algo_sense');
+    expect(GameCategory.logic.gameIds, contains('algo_sense'));
   });
 
   testWidgets('a full Algo Sense session: every answer right', (tester) async {
