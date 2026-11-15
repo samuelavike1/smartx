@@ -126,7 +126,12 @@ void main() {
     expect(find.text('TEASER OF THE DAY'), findsOneWidget);
     expect(find.text('Pick a group, then a game.'), findsOneWidget);
     // Only played games count: Odds On's highest level, 7.
-    expect(find.text('7 / 190 levels', findRichText: true), findsOneWidget);
+    // Counts come from the groups, so adding a game doesn't break this.
+    final levelled = GameCategory.values.fold(0, (s, c) => s + c.games.length);
+    expect(
+      find.text('7 / ${levelled * 10} levels', findRichText: true),
+      findsOneWidget,
+    );
     for (final c in GameCategory.values) {
       await tester.scrollUntilVisible(
         find.text(c.title),
@@ -135,14 +140,23 @@ void main() {
       );
       expect(find.text(c.blurb), findsOneWidget);
     }
-    expect(find.text('1 of 6 played'), findsOneWidget);
+    expect(
+      find.text('1 of ${GameCategory.numbers.games.length} played'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Continue starts at the saved level', (tester) async {
     await pumpApp(tester, saved: oddsOnLv5);
     await openGroup(tester, GameCategory.numbers);
     expect(find.text('Numbers & Odds'), findsOneWidget);
-    expect(find.text('7 / 60 levels', findRichText: true), findsOneWidget);
+    expect(
+      find.text(
+        '7 / ${GameCategory.numbers.games.length * 10} levels',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('Lv 5', findRichText: true), findsOneWidget);
     expect(find.textContaining('top 7', findRichText: true), findsOneWidget);
     // The last row may sit below the fold.
@@ -152,7 +166,7 @@ void main() {
         matching: find.text('New', skipOffstage: false),
         skipOffstage: false,
       ),
-      findsNWidgets(5),
+      findsNWidgets(GameCategory.numbers.games.length - 1),
     );
 
     await tester.tap(find.text('Odds On'));
