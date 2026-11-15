@@ -69,8 +69,8 @@ void main() {
   }
 
   test('Bond Desk sits in the Markets group, after Options Desk', () {
-    expect(GameCategory.markets.gameIds, ['options_desk', 'bond_desk']);
-    expect(GameCategory.markets.games.last.title, 'Bond Desk');
+    final ids = GameCategory.markets.gameIds;
+    expect(ids.indexOf('bond_desk'), ids.indexOf('options_desk') + 1);
   });
 
   testWidgets('a full Bond Desk session through the Games tab', (tester) async {

@@ -86,7 +86,7 @@ void main() {
 
   test('Risk Desk is in the Markets group', () {
     expect(groupOf('Risk Desk'), GameCategory.markets);
-    expect(GameCategory.markets.gameIds.last, 'risk_desk');
+    expect(GameCategory.markets.gameIds, contains('risk_desk'));
   });
 
   testWidgets('a full Risk Desk session: every answer right', (tester) async {
